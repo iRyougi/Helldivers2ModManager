@@ -22,7 +22,22 @@ namespace Helldivers2ModManager.ViewModels;
 [RegisterService(ServiceLifetime.Transient)]
 internal sealed partial class DashboardPageViewModel : PageViewModelBase
 {
-	public override string Title => "Mods";
+	public override string Title => _localizationService["Dashboard.Title"];
+
+	// Localized labels
+	public string AddLabel => _localizationService["Dashboard.Add"];
+	public string ReportBugLabel => _localizationService["Dashboard.ReportBug"];
+	public string SettingsLabel => _localizationService["Dashboard.Settings"];
+	public string PurgeLabel => _localizationService["Dashboard.Purge"];
+	public string DeployLabel => _localizationService["Dashboard.Deploy"];
+	public string LaunchHD2Label => _localizationService["Dashboard.LaunchHD2"];
+	public string SearchLabel => _localizationService["Dashboard.Search"];
+	public string EditLabel => _localizationService["Dashboard.Edit"];
+	public string UpdateLabel => _localizationService["Dashboard.Update"];
+	public string PurgeTooltip => _localizationService["Dashboard.PurgeTooltip"];
+	public string DeployTooltip => _localizationService["Dashboard.DeployTooltip"];
+	public string LaunchTooltip => _localizationService["Dashboard.LaunchTooltip"];
+	public string UpdateTooltip => _localizationService["Dashboard.UpdateTooltip"];
 
 	public IReadOnlyList<ModViewModel> Mods { get; private set; }
 
@@ -37,6 +52,7 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 	private readonly ModService _modService;
 	private readonly SettingsService _settingsService;
 	private readonly ProfileService _profileService;
+	private readonly LocalizationService _localizationService;
 	private ObservableCollection<ModViewModel> _mods;
 	[ObservableProperty]
 	private Visibility _editVisibility = Visibility.Hidden;
@@ -47,14 +63,18 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 	[ObservableProperty]
 	private bool _initialized = false;
 
-	public DashboardPageViewModel(ILogger<DashboardPageViewModel> logger, IServiceProvider provider, SettingsService settingsService, ModService modService, ProfileService profileService)
+	public DashboardPageViewModel(ILogger<DashboardPageViewModel> logger, IServiceProvider provider, SettingsService settingsService, ModService modService, ProfileService profileService, LocalizationService localizationService)
 	{
 		_logger = logger;
 		_navStore = new(provider.GetRequiredService<NavigationStore>);
 		_settingsService = settingsService;
 		_modService = modService;
 		_profileService = profileService;
+		_localizationService = localizationService;
 		_mods = [];
+
+		// Listen to language changes
+		_localizationService.PropertyChanged += (s, e) => UpdateLocalizedProperties();
 
 		Mods = _mods;
 
@@ -62,6 +82,24 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 			_ = Init();
 		else
 			MessageBox.Registered += (_, _) => _ = Init();
+	}
+
+	private void UpdateLocalizedProperties()
+	{
+		OnPropertyChanged(nameof(Title));
+		OnPropertyChanged(nameof(AddLabel));
+		OnPropertyChanged(nameof(ReportBugLabel));
+		OnPropertyChanged(nameof(SettingsLabel));
+		OnPropertyChanged(nameof(PurgeLabel));
+		OnPropertyChanged(nameof(DeployLabel));
+		OnPropertyChanged(nameof(LaunchHD2Label));
+		OnPropertyChanged(nameof(SearchLabel));
+		OnPropertyChanged(nameof(EditLabel));
+		OnPropertyChanged(nameof(UpdateLabel));
+		OnPropertyChanged(nameof(PurgeTooltip));
+		OnPropertyChanged(nameof(DeployTooltip));
+		OnPropertyChanged(nameof(LaunchTooltip));
+		OnPropertyChanged(nameof(UpdateTooltip));
 	}
 
 	protected override void OnPropertyChanged(PropertyChangedEventArgs e)
@@ -474,6 +512,54 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 			{
 				Message = ex.Message
 			});
+		}
+	}
+
+	[RelayCommand(AllowConcurrentExecutions = false)]
+	async Task Update(ModViewModel modVm)
+	{
+		var dialog = new OpenFileDialog
+		{
+			CheckFileExists = true,
+			CheckPathExists = true,
+			InitialDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Download"),
+			Filter = "Archive|*.rar;*.7z;*.zip;*.tar",
+			Multiselect = false,
+			Title = "Please select a mod archive to update..."
+		};
+
+		if (dialog.ShowDialog() ?? false)
+		{
+			WeakReferenceMessenger.Default.Send(new MessageBoxProgressMessage
+			{
+				Title = "Updating Mod",
+				Message = "Please wait democratically."
+			});
+			try
+			{
+				var problems = await _modService.UpdateModFromArchiveAsync(modVm.Data, new FileInfo(dialog.FileName));
+				if (problems.Length > 0)
+				{
+					var error = problems.Any(static p => p.IsError);
+					var prefix = error
+						? "Mod update failed due to problems:"
+						: "Mod updated with warnings:";
+					ShowProblems(problems, prefix, error);
+				}
+				else
+					WeakReferenceMessenger.Default.Send(new MessageBoxInfoMessage()
+					{
+						Message = _localizationService["Message.ModUpdatedSuccess"]
+					});
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Failed to update mod");
+				WeakReferenceMessenger.Default.Send(new MessageBoxErrorMessage()
+				{
+					Message = ex.Message
+				});
+			}
 		}
 	}
 

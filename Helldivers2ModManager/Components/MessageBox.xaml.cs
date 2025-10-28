@@ -1,6 +1,9 @@
 ﻿// Ignore Spelling: Helldivers
 
 using CommunityToolkit.Mvvm.Messaging;
+using Helldivers2ModManager.Services;
+using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -62,10 +65,19 @@ internal partial class MessageBox : UserControl, IRecipient<MessageBoxInfoMessag
 	private Action<string>? _inputAction;
 	private Action? _abortAction;
 	private Action? _confirmAction;
+	private readonly LocalizationService _localizationService;
 
 	public MessageBox()
 	{
 		InitializeComponent();
+
+		// Get LocalizationService from App
+		_localizationService = App.Current.Host.Services.GetService(typeof(LocalizationService)) as LocalizationService 
+			?? throw new InvalidOperationException("LocalizationService not found");
+
+		// Subscribe to language changes
+		_localizationService.PropertyChanged += (s, e) => UpdateLocalizedText();
+		UpdateLocalizedText();
 
 		WeakReferenceMessenger.Default.Register<MessageBoxInfoMessage>(this);
 		WeakReferenceMessenger.Default.Register<MessageBoxWarningMessage>(this);
@@ -82,11 +94,32 @@ internal partial class MessageBox : UserControl, IRecipient<MessageBoxInfoMessag
 		}
 	}
 
+	private void UpdateLocalizedText()
+	{
+		// Update button labels
+		if (okButton != null)
+			okButton.Content = _localizationService["MessageBox.OK"];
+		if (cancelButton != null)
+			cancelButton.Content = _localizationService["MessageBox.Cancel"];
+		
+		// Update Yes/No buttons if they exist in the visual tree
+		if (yesNoStack != null)
+		{
+			var yes = yesNoStack.Children.OfType<Button>().FirstOrDefault(b => b.Name == "yesButton");
+			if (yes != null)
+				yes.Content = _localizationService["MessageBox.Yes"];
+			
+			var no = yesNoStack.Children.OfType<Button>().FirstOrDefault(b => b.Name == "noButton");
+			if (no != null)
+				no.Content = _localizationService["MessageBox.No"];
+		}
+	}
+
 	public void Receive(MessageBoxInfoMessage message)
 	{
 		Reset();
 
-		title.Text = "Info";
+		title.Text = _localizationService["MessageBox.Info"];
 		this.message.Text = message.Message;
 
 		okButton.Visibility = Visibility.Visible;
@@ -97,7 +130,7 @@ internal partial class MessageBox : UserControl, IRecipient<MessageBoxInfoMessag
 	{
 		Reset();
 
-		title.Text = "Warning";
+		title.Text = _localizationService["MessageBox.Warning"];
 		brush.Color = Colors.Yellow;
 		this.message.Text = message.Message;
 
@@ -109,7 +142,7 @@ internal partial class MessageBox : UserControl, IRecipient<MessageBoxInfoMessag
 	{
 		Reset();
 
-		title.Text = "Error";
+		title.Text = _localizationService["MessageBox.Error"];
 		brush.Color = Colors.Red;
 		this.message.Text = message.Message;
 

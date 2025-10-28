@@ -7,6 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Helldivers2ModManager", "He
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2A0A466C-C7C7-4544-AF49-2D54CD76C10D}"
 	ProjectSection(SolutionItems) = preProject
+		hd2help.html = hd2help.html
 		LICENSE.txt = LICENSE.txt
 		README.md = README.md
 		完整汉化测试指南.md = 完整汉化测试指南.md

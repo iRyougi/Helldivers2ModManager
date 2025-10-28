@@ -181,6 +181,15 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 			["Settings.Language"] = "Language",
 			["Settings.LanguageDesc"] = "Select your preferred language for the interface.",
 			
+			// MessageBox
+			["MessageBox.Info"] = "Info",
+			["MessageBox.Warning"] = "Warning",
+			["MessageBox.Error"] = "Error",
+			["MessageBox.OK"] = "OK",
+			["MessageBox.Cancel"] = "Cancel",
+			["MessageBox.Yes"] = "Yes",
+			["MessageBox.No"] = "No",
+			
 			// Messages
 			["Message.LoadingSettings"] = "Loading settings",
 			["Message.PleaseWait"] = "Please wait democratically.",
@@ -205,6 +214,7 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 			["Message.FileNameLengthError"] = "Archive file names can only be 16 characters long.",
 			["Message.LookingForGame"] = "Looking for game",
 			["Message.GameNotFound"] = "Your Helldivers 2 game could not be found automatically. Please set it manually.",
+			["Message.ModUpdatedSuccess"] = "Mod updated successfully and has been disabled.",
 			
 			// Dialog Titles
 			["Dialog.SelectGameFolder"] = "Please select you Helldivers 2 folder...",
@@ -269,6 +279,15 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 			["Settings.Language"] = "语言",
 			["Settings.LanguageDesc"] = "选择您喜欢的界面语言。",
 			
+			// MessageBox
+			["MessageBox.Info"] = "信息",
+			["MessageBox.Warning"] = "警告",
+			["MessageBox.Error"] = "错误",
+			["MessageBox.OK"] = "确定",
+			["MessageBox.Cancel"] = "取消",
+			["MessageBox.Yes"] = "是",
+			["MessageBox.No"] = "否",
+			
 			// Messages
 			["Message.LoadingSettings"] = "正在加载设置",
 			["Message.PleaseWait"] = "请民主地等待。",
@@ -293,6 +312,7 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 			["Message.FileNameLengthError"] = "存档文件名只能是16个字符长。",
 			["Message.LookingForGame"] = "正在查找游戏",
 			["Message.GameNotFound"] = "无法自动找到您的Helldivers 2游戏。请手动设置。",
+			["Message.ModUpdatedSuccess"] = "模组更新成功并已被禁用。",
 			
 			// Dialog Titles
 			["Dialog.SelectGameFolder"] = "请选择您的Helldivers 2文件夹...",

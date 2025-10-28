@@ -549,7 +549,7 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 				else
 					WeakReferenceMessenger.Default.Send(new MessageBoxInfoMessage()
 					{
-						Message = "Mod updated successfully and has been disabled."
+						Message = _localizationService["Message.ModUpdatedSuccess"]
 					});
 			}
 			catch (Exception ex)

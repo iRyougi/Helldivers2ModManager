@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -9,8 +10,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Helldivers2ModManager.Services;
 
-[RegisterService(ServiceLifetime.Transient)]
-internal sealed class SettingsService
+[RegisterService(ServiceLifetime.Singleton)]
+internal sealed class SettingsService : INotifyPropertyChanged
 {
 	public const float OpacityMax = 1.0f;
 	
@@ -97,7 +98,12 @@ internal sealed class SettingsService
 		{
 			GuardInitialized();
 			GuardReadonly();
-			_opacity = Math.Clamp(value, OpacityMin, OpacityMax);
+			var newValue = Math.Clamp(value, OpacityMin, OpacityMax);
+			if (Math.Abs(_opacity - newValue) > 0.001f)
+			{
+				_opacity = newValue;
+				OnPropertyChanged();
+			}
 		}
 	}
 
@@ -159,16 +165,27 @@ internal sealed class SettingsService
 	private bool _caseSensitiveSearch;
 	private string _language = "en";
 
+	public event PropertyChangedEventHandler? PropertyChanged;
+
 	public SettingsService(ILogger<SettingsService> logger)
 	{
 		_logger = logger;
+	}
+
+	private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+	{
+		PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 	}
 
 	[MemberNotNullWhen(true, nameof(_gameDirectory), nameof(_storageDirectory), nameof(_tempDirectory), nameof(_skipList))]
 	public async Task<bool> InitAsync(bool @readonly = false)
 	{
 		if (Initialized)
+		{
+			// Allow changing readonly state after initialization
+			IsReadonly = @readonly;
 			return true;
+		}
 
 		_logger.LogInformation("Initializing settings service (readonly = {})", @readonly);
 		
@@ -190,7 +207,11 @@ internal sealed class SettingsService
 	public void InitDefault(bool @readonly = false)
 	{
 		if (Initialized)
+		{
+			// Allow changing readonly state after initialization
+			IsReadonly = @readonly;
 			return;
+		}
 
 		_logger.LogInformation("Initializing settings service as default (readonly = {})", @readonly);
 

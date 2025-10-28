@@ -31,8 +31,8 @@ internal sealed partial class MainViewModel : ObservableObject
 		_localizationService = localizationService;
 		_settingsService = settingsService;
 		
-		// Initialize background with opacity from settings, or default to 0.8 if not initialized
-		float initialOpacity = _settingsService.Initialized ? _settingsService.Opacity : 0.8f;
+		// Initialize background with opacity from settings, or default if not initialized
+		float initialOpacity = _settingsService.Initialized ? _settingsService.Opacity : SettingsService.OpacityDefault;
 		_background = new SolidColorBrush(Color.FromScRgb(initialOpacity, 0, 0, 0));
 
 		_navigationStore.Navigated += NavigationStore_Navigated;

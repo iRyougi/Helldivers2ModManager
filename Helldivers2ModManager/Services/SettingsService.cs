@@ -17,6 +17,10 @@ internal sealed class SettingsService : INotifyPropertyChanged
 	
 	public const float OpacityMin = 0.4f;
 	
+	public const float OpacityDefault = 0.8f;
+	
+	private const float OpacityTolerance = 0.001f;
+	
 	[MemberNotNull(nameof(_gameDirectory), nameof(_storageDirectory), nameof(_tempDirectory), nameof(_skipList))]
 	public bool Initialized { get; private set; }
 	
@@ -99,7 +103,7 @@ internal sealed class SettingsService : INotifyPropertyChanged
 			GuardInitialized();
 			GuardReadonly();
 			var newValue = Math.Clamp(value, OpacityMin, OpacityMax);
-			if (Math.Abs(_opacity - newValue) > 0.001f)
+			if (Math.Abs(_opacity - newValue) > OpacityTolerance)
 			{
 				_opacity = newValue;
 				OnPropertyChanged();
@@ -378,7 +382,7 @@ internal sealed class SettingsService : INotifyPropertyChanged
 		_storageDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Helldivers2ModManager");
 		_tempDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Temp", "Helldivers2ModManager");
 		_logLevel = LogLevel.Warning;
-		_opacity = 0.8f;
+		_opacity = OpacityDefault;
 		_skipList = [];
 		_caseSensitiveSearch = false;
 		_language = "en";

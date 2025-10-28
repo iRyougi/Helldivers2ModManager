@@ -95,7 +95,7 @@ internal sealed partial class SettingsPageViewModel : PageViewModelBase
 
 	public float Opacity
 	{
-		get => _settingsService.Initialized ? _settingsService.Opacity : 0.8f;
+		get => _settingsService.Initialized ? _settingsService.Opacity : SettingsService.OpacityDefault;
 		set
 		{
 			OnPropertyChanging();

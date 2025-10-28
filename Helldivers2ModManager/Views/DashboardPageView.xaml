@@ -223,6 +223,20 @@
 									-->
 									<Button Width="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=Self}}"
 											Padding="5"
+											VerticalContentAlignment="Center"
+											HorizontalContentAlignment="Center"
+											Foreground="White"
+											ToolTipService.ToolTip="{Binding Path=DataContext.UpdateTooltip, RelativeSource={RelativeSource AncestorType=Page}}"
+											Command="{Binding DataContext.UpdateCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Page}}"
+											CommandParameter="{Binding}">
+										<TextBlock Text="↻" 
+												   FontSize="24" 
+												   FontWeight="Bold"
+												   VerticalAlignment="Center"
+												   HorizontalAlignment="Center"/>
+									</Button>
+									<Button Width="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=Self}}"
+											Padding="5"
 											VerticalContentAlignment="Stretch"
 											HorizontalContentAlignment="Stretch"
 											Style="{DynamicResource RemoveButton}"

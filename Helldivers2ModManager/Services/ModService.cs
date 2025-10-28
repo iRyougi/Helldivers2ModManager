@@ -247,6 +247,99 @@ internal sealed partial class ModService
 		_logger.LogInformation("Mod {} removed", mod.Manifest.Name);
 	}
 
+	public async Task<ModProblem[]> UpdateModFromArchiveAsync(ModData oldMod, FileInfo newArchiveFile)
+	{
+		GuardInitialized();
+
+		var problems = new List<ModProblem>();
+
+		_logger.LogInformation("Attempting to update mod \"{}\" from \"{}\"", oldMod.Manifest.Name, newArchiveFile.Name);
+
+		var oldModName = oldMod.Manifest.Name;
+		var oldModDir = oldMod.Directory;
+
+		// Create temporary directory for extraction
+		var tmpDir = new DirectoryInfo(Path.Combine(_settingsService.TempDirectory, newArchiveFile.Name[..^newArchiveFile.Extension.Length]));
+		_logger.LogInformation("Creating clean temporary directory \"{}\"", tmpDir.FullName);
+		if (tmpDir.Exists)
+			tmpDir.Delete(true);
+		tmpDir.Create();
+
+		_logger.LogInformation("Extracting archive");
+		await Task.Run(() => ArchiveFactory.Open(newArchiveFile).ExtractToDirectory(tmpDir.FullName));
+
+		var manifestFile = new FileInfo(Path.Combine(tmpDir.FullName, "manifest.json"));
+
+		IModManifest manifest;
+		if (manifestFile.Exists)
+		{
+			manifest = ModManifest.DeserializeFromFile(manifestFile);
+
+			if (!CheckPaths(manifest, problems, tmpDir, manifestFile))
+			{
+				tmpDir.Delete(true);
+				return problems.ToArray();
+			}
+		}
+		else
+		{
+			problems.Add(new ModProblem
+			{
+				Directory = tmpDir,
+				Kind = ModProblemKind.NoManifestFound,
+			});
+			manifest = ModManifest.InferFromDirectory(tmpDir);
+
+			var stream = manifestFile.Open(FileMode.CreateNew, FileAccess.Write, FileShare.Read);
+			var writer = new Utf8JsonWriter(stream, new JsonWriterOptions
+			{
+				IndentCharacter = '\t',
+				Indented = true,
+				IndentSize = 1,
+			});
+
+			manifest.Serialize(writer);
+
+			await writer.DisposeAsync();
+			await stream.DisposeAsync();
+		}
+
+		_logger.LogInformation("Removing old mod from list");
+		if (!_mods.Remove(oldMod))
+		{
+			_logger.LogError("Old mod not found in list");
+			tmpDir.Delete(true);
+			problems.Add(new ModProblem
+			{
+				Directory = oldModDir,
+				Kind = ModProblemKind.Duplicate,
+			});
+			return problems.ToArray();
+		}
+
+		ModRemoved?.Invoke(oldMod);
+
+		_logger.LogInformation("Deleting old mod directory");
+		await Task.Run(() => oldModDir.Delete(true));
+
+		_logger.LogInformation("Moving new mod to storage with old mod name");
+		var modDir = new DirectoryInfo(Path.Combine(_settingsService.StorageDirectory, "Mods", oldModName));
+		modDir.Parent?.Create();
+		await Task.Run(() => tmpDir.CopyTo(modDir.FullName));
+
+		_logger.LogInformation("Adding updated mod with disabled state");
+		var mod = new ModData(modDir, manifest)
+		{
+			Enabled = false  // Set to disabled as per requirement
+		};
+		_mods.Add(mod);
+		ModAdded?.Invoke(mod);
+
+		tmpDir.Delete(true);
+		_logger.LogInformation("Mod update complete");
+		return problems.ToArray();
+	}
+
 	public async Task DeployAsync(Guid[] modGuids)
 	{
 		GuardInitialized();

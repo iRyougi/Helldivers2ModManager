@@ -144,9 +144,11 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 			["Dashboard.LaunchHD2"] = "Launch HD2",
 			["Dashboard.Search"] = "Search:",
 			["Dashboard.Edit"] = "Edit",
+			["Dashboard.Update"] = "Update",
 			["Dashboard.PurgeTooltip"] = "Removes all patch files from the games data directory.",
 			["Dashboard.DeployTooltip"] = "Installs all selected mods patch files into the games data directory.",
 			["Dashboard.LaunchTooltip"] = "Runs the game through steam.",
+			["Dashboard.UpdateTooltip"] = "Update this mod with a new version.",
 			
 			// Settings Page
 			["Settings.Title"] = "Settings",
@@ -225,14 +227,16 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 			["Dashboard.Add"] = "添加",
 			["Dashboard.ReportBug"] = "报告错误",
 			["Dashboard.Settings"] = "设置",
-			["Dashboard.Purge"] = "清理",
+			["Dashboard.Purge"] = "清除",
 			["Dashboard.Deploy"] = "部署",
 			["Dashboard.LaunchHD2"] = "启动游戏",
 			["Dashboard.Search"] = "搜索：",
 			["Dashboard.Edit"] = "编辑",
+			["Dashboard.Update"] = "更新",
 			["Dashboard.PurgeTooltip"] = "从游戏数据目录中删除所有补丁文件。",
-			["Dashboard.DeployTooltip"] = "将所有选定的模组补丁文件安装到游戏数据目录中。",
-			["Dashboard.LaunchTooltip"] = "通过Steam运行游戏。",
+			["Dashboard.DeployTooltip"] = "将所有选中的模组补丁文件安装到游戏数据目录中。",
+			["Dashboard.LaunchTooltip"] = "通过Steam启动游戏。",
+			["Dashboard.UpdateTooltip"] = "使用新版本更新此模组。",
 			
 			// Settings Page
 			["Settings.Title"] = "设置",

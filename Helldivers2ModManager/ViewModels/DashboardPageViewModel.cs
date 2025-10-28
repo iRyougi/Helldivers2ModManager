@@ -33,9 +33,11 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 	public string LaunchHD2Label => _localizationService["Dashboard.LaunchHD2"];
 	public string SearchLabel => _localizationService["Dashboard.Search"];
 	public string EditLabel => _localizationService["Dashboard.Edit"];
+	public string UpdateLabel => _localizationService["Dashboard.Update"];
 	public string PurgeTooltip => _localizationService["Dashboard.PurgeTooltip"];
 	public string DeployTooltip => _localizationService["Dashboard.DeployTooltip"];
 	public string LaunchTooltip => _localizationService["Dashboard.LaunchTooltip"];
+	public string UpdateTooltip => _localizationService["Dashboard.UpdateTooltip"];
 
 	public IReadOnlyList<ModViewModel> Mods { get; private set; }
 
@@ -93,9 +95,11 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		OnPropertyChanged(nameof(LaunchHD2Label));
 		OnPropertyChanged(nameof(SearchLabel));
 		OnPropertyChanged(nameof(EditLabel));
+		OnPropertyChanged(nameof(UpdateLabel));
 		OnPropertyChanged(nameof(PurgeTooltip));
 		OnPropertyChanged(nameof(DeployTooltip));
 		OnPropertyChanged(nameof(LaunchTooltip));
+		OnPropertyChanged(nameof(UpdateTooltip));
 	}
 
 	protected override void OnPropertyChanged(PropertyChangedEventArgs e)
@@ -508,6 +512,54 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 			{
 				Message = ex.Message
 			});
+		}
+	}
+
+	[RelayCommand(AllowConcurrentExecutions = false)]
+	async Task Update(ModViewModel modVm)
+	{
+		var dialog = new OpenFileDialog
+		{
+			CheckFileExists = true,
+			CheckPathExists = true,
+			InitialDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Download"),
+			Filter = "Archive|*.rar;*.7z;*.zip;*.tar",
+			Multiselect = false,
+			Title = "Please select a mod archive to update..."
+		};
+
+		if (dialog.ShowDialog() ?? false)
+		{
+			WeakReferenceMessenger.Default.Send(new MessageBoxProgressMessage
+			{
+				Title = "Updating Mod",
+				Message = "Please wait democratically."
+			});
+			try
+			{
+				var problems = await _modService.UpdateModFromArchiveAsync(modVm.Data, new FileInfo(dialog.FileName));
+				if (problems.Length > 0)
+				{
+					var error = problems.Any(static p => p.IsError);
+					var prefix = error
+						? "Mod update failed due to problems:"
+						: "Mod updated with warnings:";
+					ShowProblems(problems, prefix, error);
+				}
+				else
+					WeakReferenceMessenger.Default.Send(new MessageBoxInfoMessage()
+					{
+						Message = "Mod updated successfully and has been disabled."
+					});
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Failed to update mod");
+				WeakReferenceMessenger.Default.Send(new MessageBoxErrorMessage()
+				{
+					Message = ex.Message
+				});
+			}
 		}
 	}
 

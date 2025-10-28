@@ -3,7 +3,7 @@ name: Bug 报告
 about: 报告你在使用中遇到的错误或异常行为
 title: "[Bug] 简要描述问题"
 labels: bug
-assignees: iRyougi, Copilot
+assignees: iRyougi
 
 ---
 

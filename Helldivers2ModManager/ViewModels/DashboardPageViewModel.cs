@@ -44,9 +44,9 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 	public bool IsSearchEmpty => string.IsNullOrEmpty(SearchText);
 	
 	private static readonly ProcessStartInfo s_gameStartInfo = new("steam://run/553850") { UseShellExecute = true };
-	private static readonly ProcessStartInfo s_reportStartInfo = new("https://teutinsa.github.io/hd2mm-site/help/bug_reporting.html") { UseShellExecute = true };
+	private static readonly ProcessStartInfo s_reportStartInfo = new("https://www.iryougi.com/index.php/hd2help/") { UseShellExecute = true };
 	private static readonly ProcessStartInfo s_discordStartInfo = new("https://discord.gg/helldiversmodding") { UseShellExecute = true };
-	private static readonly ProcessStartInfo s_githubStartInfo = new("https://github.com/teutinsa/Helldivers2ModManager") { UseShellExecute = true };
+	private static readonly ProcessStartInfo s_githubStartInfo = new("https://github.com/iRyougi/Helldivers2ModManager") { UseShellExecute = true };
 	private readonly ILogger<DashboardPageViewModel> _logger;
 	private readonly Lazy<NavigationStore> _navStore;
 	private readonly ModService _modService;
@@ -258,7 +258,7 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		var errors = problems.Where(static p => p.IsError).ToArray();
 		if (errors.Length != 0)
 		{
-			sb.AppendLine("Errors:");
+			sb.AppendLine(_localizationService["Problem.Errors"]);
 			foreach (var e in errors)
 			{
 				sb.Append("\t - \"");
@@ -268,13 +268,13 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 				sb.Append("\t\t");
 				string desc = e.Kind switch
 				{
-					ModProblemKind.CantParseManifest => "Can't parse manifest!",
-					ModProblemKind.UnknownManifestVersion => "Unknown manifest version!",
-					ModProblemKind.OutOfSupportManifest => $"Unsupported manifest version! Please update.\n\t\tManager version {App.Version} does not support this version of the manifest.",
-					ModProblemKind.Duplicate => "A mod with the same GUID was already added!",
+					ModProblemKind.CantParseManifest => _localizationService["Problem.CantParseManifest"],
+					ModProblemKind.UnknownManifestVersion => _localizationService["Problem.UnknownManifestVersion"],
+					ModProblemKind.OutOfSupportManifest => string.Format(_localizationService["Problem.OutOfSupportManifest"], App.Version),
+					ModProblemKind.Duplicate => _localizationService["Problem.Duplicate"],
 					ModProblemKind.InvalidPath => e.ExtraData is not null
-						? $"The include path \"{e.ExtraData}\" is invalid!"
-						: "A include path is invalid!",
+						? string.Format(_localizationService["Problem.InvalidPathWithData"], e.ExtraData)
+						: _localizationService["Problem.InvalidPath"],
 					_ => throw new NotImplementedException()
 				};
 				sb.AppendLine(desc);
@@ -284,7 +284,7 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		var warnings = problems.Where(static p => !p.IsError).ToArray();
 		if (warnings.Length != 0)
 		{
-			sb.AppendLine("Warnings:");
+			sb.AppendLine(_localizationService["Problem.Warnings"]);
 			foreach (var w in warnings)
 			{
 				sb.Append("\t - \"");
@@ -295,15 +295,15 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 				string desc = w.Kind switch
 				{
 					ModProblemKind.NoManifestFound => isInit
-						? "No manifest found in directory!\n\t\t\tAction: Deleting"
-						: "No manifest found in directory!\n\t\t\tAction: Inferring from directory",
-					ModProblemKind.EmptyOptions => "Manifest contains empty options! This mod will likely do nothing.",
-					ModProblemKind.EmptySubOptions => "Manifest contains empty sub-options! This mod will likely not work as expected.",
-					ModProblemKind.EmptyIncludes => "Manifest contains empty include lists! This mod my not do anything.",
+						? _localizationService["Problem.NoManifestFoundDeleting"]
+						: _localizationService["Problem.NoManifestFoundInferring"],
+					ModProblemKind.EmptyOptions => _localizationService["Problem.EmptyOptions"],
+					ModProblemKind.EmptySubOptions => _localizationService["Problem.EmptySubOptions"],
+					ModProblemKind.EmptyIncludes => _localizationService["Problem.EmptyIncludes"],
 					ModProblemKind.InvalidImagePath => w.ExtraData is not null
-						? $"Manifest image path \"{w.ExtraData}\" is invalid!"
-						: "Manifest contains invalid image path!",
-					ModProblemKind.EmptyImagePath => "Manifest constains empty image path!",
+						? string.Format(_localizationService["Problem.InvalidImagePathWithData"], w.ExtraData)
+						: _localizationService["Problem.InvalidImagePath"],
+					ModProblemKind.EmptyImagePath => _localizationService["Problem.EmptyImagePath"],
 					_ => throw new NotImplementedException()
 				};
 				sb.AppendLine(desc);

@@ -58,6 +58,11 @@
 						   Height="30"/>
 				</Button>
 			</Grid>
+			<TextBlock Text="iRyougi二次开发版"
+					   Foreground="White"
+					   FontSize="14"
+					   TextAlignment="Center"
+					   Margin="5"/>
 		</StackPanel>
 		<Button Grid.Row="2"
 				Grid.Column="0"

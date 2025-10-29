@@ -22,7 +22,7 @@ internal sealed class ModSubOption : IJsonSerializable<ModSubOption>
         if (!root.TryGetProperty(nameof(Include), out var prop))
 			throw new SerializationException($"Could not find property of name \"{nameof(Include)}\"!");
 		if (prop.ValueKind != JsonValueKind.Array)
-			throw new SerializationException($"Property \"{nameof(Include)}\" was not of expected type ´array´!");
+			throw new SerializationException($"Property \"{nameof(Include)}\" was not of expected type array?");
 		var include = new List<string>(prop.GetArrayLength());
         foreach (var elm in prop.EnumerateArray())
             if (elm.ValueKind == JsonValueKind.String)

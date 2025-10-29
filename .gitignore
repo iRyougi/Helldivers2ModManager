@@ -372,3 +372,4 @@ FodyWeavers.xsd
 
 # Jetbrains Rider
 .idea/
+/hd2help.html

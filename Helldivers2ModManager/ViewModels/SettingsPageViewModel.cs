@@ -95,7 +95,7 @@ internal sealed partial class SettingsPageViewModel : PageViewModelBase
 
 	public float Opacity
 	{
-		get => _settingsService.Initialized ? _settingsService.Opacity : 0.8f;
+		get => _settingsService.Initialized ? _settingsService.Opacity : SettingsService.OpacityDefault;
 		set
 		{
 			OnPropertyChanging();
@@ -279,8 +279,8 @@ internal sealed partial class SettingsPageViewModel : PageViewModelBase
 		});
 		try
 		{
-			if (!await _settingsService.InitAsync())
-				_settingsService.InitDefault();
+			if (!await _settingsService.InitAsync(false))
+				_settingsService.InitDefault(false);
 		}
 		catch (Exception ex)
 		{
@@ -291,7 +291,7 @@ internal sealed partial class SettingsPageViewModel : PageViewModelBase
 				Message = "Do you want to reset your settings?",
 				Confirm = () =>
 				{
-					_settingsService.InitDefault();
+					_settingsService.InitDefault(false);
 					Update();
 				},
 			});
@@ -341,6 +341,8 @@ internal sealed partial class SettingsPageViewModel : PageViewModelBase
 		try
 		{
 			await _settingsService.SaveAsync();
+			// Set back to readonly after saving
+			await _settingsService.InitAsync(true);
 		}
 		catch (Exception ex)
 		{

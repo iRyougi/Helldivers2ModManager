@@ -19,19 +19,35 @@ internal sealed partial class MainViewModel : ObservableObject
 
 	public string Version => string.IsNullOrEmpty(App.VersionAddition) ? $"v{App.Version}" : $"v{App.Version} {App.VersionAddition}";
 
-	private static readonly ProcessStartInfo s_helpStartInfo = new(@"https://teutinsa.github.io/hd2mm-site/index.html") { UseShellExecute = true };
+	private static readonly ProcessStartInfo s_helpStartInfo = new(@"https://www.iryougi.com/index.php/hd2help/") { UseShellExecute = true }; //帮助按钮在这里修改，现在的为placeholder
 	private readonly NavigationStore _navigationStore;
 	private readonly LocalizationService _localizationService;
+	private readonly SettingsService _settingsService;
 	private readonly SolidColorBrush _background;
 
-	public MainViewModel(NavigationStore navigationStore, LocalizationService localizationService)
+	public MainViewModel(NavigationStore navigationStore, LocalizationService localizationService, SettingsService settingsService)
 	{
 		_navigationStore = navigationStore;
 		_localizationService = localizationService;
-		_background = new SolidColorBrush(Color.FromScRgb(0.7f, 0, 0, 0));
+		_settingsService = settingsService;
+		
+		// Initialize background with opacity from settings, or default if not initialized
+		float initialOpacity = _settingsService.Initialized ? _settingsService.Opacity : SettingsService.OpacityDefault;
+		_background = new SolidColorBrush(Color.FromScRgb(initialOpacity, 0, 0, 0));
 
 		_navigationStore.Navigated += NavigationStore_Navigated;
 		_localizationService.PropertyChanged += (s, e) => OnPropertyChanged(nameof(Title));
+		
+		// Listen to opacity changes from settings
+		_settingsService.PropertyChanged += SettingsService_PropertyChanged;
+	}
+
+	private void SettingsService_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+	{
+		if (e.PropertyName == nameof(SettingsService.Opacity) && _settingsService.Initialized)
+		{
+			_background.Color = Color.FromScRgb(_settingsService.Opacity, 0, 0, 0);
+		}
 	}
 
 	private void NavigationStore_Navigated(object? sender, EventArgs e)

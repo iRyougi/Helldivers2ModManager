@@ -1,3 +1,4 @@
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.10.35122.118
@@ -6,8 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Helldivers2ModManager", "He
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2A0A466C-C7C7-4544-AF49-2D54CD76C10D}"
 	ProjectSection(SolutionItems) = preProject
+		hd2help.html = hd2help.html
 		LICENSE.txt = LICENSE.txt
 		README.md = README.md
+		完整汉化测试指南.md = 完整汉化测试指南.md
+		汉化快速参考.md = 汉化快速参考.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Purger", "Purger\Purger.csproj", "{550568D3-A9A4-4B60-8CDD-9CBD850F661A}"

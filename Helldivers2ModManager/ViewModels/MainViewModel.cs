@@ -19,7 +19,7 @@ internal sealed partial class MainViewModel : ObservableObject
 
 	public string Version => string.IsNullOrEmpty(App.VersionAddition) ? $"v{App.Version}" : $"v{App.Version} {App.VersionAddition}";
 
-	private static readonly ProcessStartInfo s_helpStartInfo = new(@"https://iryougi.com") { UseShellExecute = true }; //帮助按钮在这里修改，现在的为placeholder
+	private static readonly ProcessStartInfo s_helpStartInfo = new(@"https://www.iryougi.com/index.php/hd2help/") { UseShellExecute = true }; //帮助按钮在这里修改，现在的为placeholder
 	private readonly NavigationStore _navigationStore;
 	private readonly LocalizationService _localizationService;
 	private readonly SettingsService _settingsService;

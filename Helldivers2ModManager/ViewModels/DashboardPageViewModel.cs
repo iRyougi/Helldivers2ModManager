@@ -44,7 +44,7 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 	public bool IsSearchEmpty => string.IsNullOrEmpty(SearchText);
 	
 	private static readonly ProcessStartInfo s_gameStartInfo = new("steam://run/553850") { UseShellExecute = true };
-	private static readonly ProcessStartInfo s_reportStartInfo = new("https://www.iryougi.com/index.php/hd2help/") { UseShellExecute = true };
+	private static readonly ProcessStartInfo s_reportStartInfo = new("https://github.com/iRyougi/Helldivers2ModManager/issues") { UseShellExecute = true };
 	private static readonly ProcessStartInfo s_discordStartInfo = new("https://discord.gg/helldiversmodding") { UseShellExecute = true };
 	private static readonly ProcessStartInfo s_githubStartInfo = new("https://github.com/iRyougi/Helldivers2ModManager") { UseShellExecute = true };
 	private readonly ILogger<DashboardPageViewModel> _logger;

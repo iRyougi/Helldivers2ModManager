@@ -24,6 +24,7 @@
 	  <Resource Include="Resources\Fonts\FS Sinclair Medium.otf" />
 	  <Resource Include="Resources\Fonts\FS Sinclair Regular.otf" />
 	  <Resource Include="Resources\Images\discord_icon.png" />
+	  <Content Include="bin\Debug\net8.0-windows\Languages\en.json" />
 	  <Content Include="Resources\Images\icon.ico">
 	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
 	  </Content>

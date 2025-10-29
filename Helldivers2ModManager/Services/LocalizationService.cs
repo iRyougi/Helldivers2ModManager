@@ -172,7 +172,10 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 			["Settings.DevOptions"] = "Dev Options",
 			["Settings.SkipList"] = "Skip List",
 			["Settings.SkipListDesc"] = "This skips the 0th index of all specified files during deployment.",
+			["Settings.Back"] = "Back",
 			["Settings.OK"] = "OK",
+			["Settings.DiscardChangesTitle"] = "Discard Changes?",
+			["Settings.DiscardChangesMessage"] = "You have unsaved changes. Do you want to discard them and return to the main screen?",
 			["Settings.Language"] = "Language",
 			["Settings.LanguageDesc"] = "Select your preferred language for the interface.",
 			
@@ -304,7 +307,10 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 			["Settings.DevOptions"] = "开发者选项",
 			["Settings.SkipList"] = "跳过列表",
 			["Settings.SkipListDesc"] = "在部署期间跳过所有指定文件的第0个索引。",
+			["Settings.Back"] = "返回",
 			["Settings.OK"] = "确定",
+			["Settings.DiscardChangesTitle"] = "放弃更改？",
+			["Settings.DiscardChangesMessage"] = "您有未保存的更改。是否要放弃这些更改并返回主界面？",
 			["Settings.Language"] = "语言",
 			["Settings.LanguageDesc"] = "选择您喜欢的界面语言。",
 			

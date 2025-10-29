@@ -48,6 +48,7 @@ internal sealed partial class SettingsPageViewModel : PageViewModelBase
 	public string SkipListLabel => _localizationService["Settings.SkipList"];
 	public string SkipListDesc => _localizationService["Settings.SkipListDesc"];
 	public string OKLabel => _localizationService["Settings.OK"];
+	public string BackLabel => _localizationService["Settings.Back"];
 
 	public string GameDir
 	{
@@ -138,6 +139,16 @@ internal sealed partial class SettingsPageViewModel : PageViewModelBase
 	[ObservableProperty]
 	private int _selectedSkip = -1;
 
+	// Track initial state for change detection
+	private string? _initialGameDir;
+	private string? _initialTempDir;
+	private string? _initialStorageDir;
+	private LogLevel _initialLogLevel;
+	private float _initialOpacity;
+	private bool _initialCaseSensitiveSearch;
+	private string? _initialLanguage;
+	private List<string>? _initialSkipList;
+
 	public SettingsPageViewModel(ILogger<SettingsPageViewModel> logger, NavigationStore navStore, SettingsService settingsService, LocalizationService localizationService)
 	{
 		_logger = logger;
@@ -187,6 +198,7 @@ internal sealed partial class SettingsPageViewModel : PageViewModelBase
 		OnPropertyChanged(nameof(SkipListLabel));
 		OnPropertyChanged(nameof(SkipListDesc));
 		OnPropertyChanged(nameof(OKLabel));
+		OnPropertyChanged(nameof(BackLabel));
 	}
 
 	private static bool ValidateGameDir(DirectoryInfo dir, [NotNullWhen(false)] out string? error)
@@ -299,6 +311,9 @@ internal sealed partial class SettingsPageViewModel : PageViewModelBase
 		}
 		_logger.LogInformation("Settings loaded successfully");
 		WeakReferenceMessenger.Default.Send(new MessageBoxHideMessage());
+		
+		// Store initial state for change tracking
+		StoreInitialState();
 	}
 
 	private void Update()
@@ -311,6 +326,86 @@ internal sealed partial class SettingsPageViewModel : PageViewModelBase
 		OnPropertyChanged(nameof(SkipList));
 		OnPropertyChanged(nameof(CaseSensitiveSearch));
 		OnPropertyChanged(nameof(Language));
+		
+		// Update initial state after reset
+		StoreInitialState();
+	}
+
+	private void StoreInitialState()
+	{
+		if (!_settingsService.Initialized)
+			return;
+			
+		_initialGameDir = _settingsService.GameDirectory;
+		_initialTempDir = _settingsService.TempDirectory;
+		_initialStorageDir = _settingsService.StorageDirectory;
+		_initialLogLevel = _settingsService.LogLevel;
+		_initialOpacity = _settingsService.Opacity;
+		_initialCaseSensitiveSearch = _settingsService.CaseSensitiveSearch;
+		_initialLanguage = _settingsService.Language;
+		_initialSkipList = new List<string>(_settingsService.SkipList);
+	}
+
+	private void RestoreInitialState()
+	{
+		if (!_settingsService.Initialized)
+			return;
+
+		_logger.LogInformation("Restoring initial settings state");
+		
+		// Restore all settings to initial values
+		_settingsService.GameDirectory = _initialGameDir ?? string.Empty;
+		_settingsService.TempDirectory = _initialTempDir ?? string.Empty;
+		_settingsService.StorageDirectory = _initialStorageDir ?? string.Empty;
+		_settingsService.LogLevel = _initialLogLevel;
+		_settingsService.Opacity = _initialOpacity;
+		_settingsService.CaseSensitiveSearch = _initialCaseSensitiveSearch;
+		_settingsService.Language = _initialLanguage ?? "en";
+		
+		// Restore language in LocalizationService
+		_localizationService.CurrentLanguage = _initialLanguage ?? "en";
+		
+		// Restore skip list
+		_settingsService.SkipList.Clear();
+		if (_initialSkipList != null)
+		{
+			foreach (var item in _initialSkipList)
+			{
+				_settingsService.SkipList.Add(item);
+			}
+		}
+	}
+
+	private bool HasChanges()
+	{
+		if (!_settingsService.Initialized)
+			return false;
+
+		if (_initialGameDir != _settingsService.GameDirectory)
+			return true;
+		if (_initialTempDir != _settingsService.TempDirectory)
+			return true;
+		if (_initialStorageDir != _settingsService.StorageDirectory)
+			return true;
+		if (_initialLogLevel != _settingsService.LogLevel)
+			return true;
+		if (Math.Abs(_initialOpacity - _settingsService.Opacity) > 0.001f)
+			return true;
+		if (_initialCaseSensitiveSearch != _settingsService.CaseSensitiveSearch)
+			return true;
+		if (_initialLanguage != _settingsService.Language)
+			return true;
+		
+		// Check skip list changes
+		if (_initialSkipList == null || _initialSkipList.Count != _settingsService.SkipList.Count)
+			return true;
+		for (int i = 0; i < _initialSkipList.Count; i++)
+		{
+			if (_initialSkipList[i] != _settingsService.SkipList[i])
+				return true;
+		}
+
+		return false;
 	}
 
 	private void SkipList_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -524,5 +619,32 @@ internal sealed partial class SettingsPageViewModel : PageViewModelBase
 			{
 				Message = "Your Helldivers 2 game could not be found automatically. Please set it manually."
 			});
+	}
+
+	[RelayCommand]
+	async Task Back()
+	{
+		if (HasChanges())
+		{
+			// Show confirmation dialog
+			WeakReferenceMessenger.Default.Send(new MessageBoxConfirmMessage
+			{
+				Title = _localizationService["Settings.DiscardChangesTitle"],
+				Message = _localizationService["Settings.DiscardChangesMessage"],
+				Confirm = () =>
+				{
+					// Restore initial state before going back
+					_logger.LogInformation("Discarding settings changes and restoring initial state");
+					RestoreInitialState();
+					_navStore.Navigate<DashboardPageViewModel>();
+				},
+				// If user clicks No/Cancel, do nothing (stay on settings page)
+			});
+		}
+		else
+		{
+			// No changes, go back directly
+			_navStore.Navigate<DashboardPageViewModel>();
+		}
 	}
 }

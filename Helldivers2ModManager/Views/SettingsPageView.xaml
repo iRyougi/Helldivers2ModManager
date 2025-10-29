@@ -250,9 +250,22 @@
 			</StackPanel>
 		</ScrollViewer>
 		<Grid Grid.Row="1">
-			<Button Content="{Binding OKLabel}"
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*"/>
+				<ColumnDefinition Width="Auto"/>
+				<ColumnDefinition Width="Auto"/>
+			</Grid.ColumnDefinitions>
+			<Button Grid.Column="1"
+					Content="{Binding BackLabel}"
+					Command="{Binding BackCommand}"
+					Style="{DynamicResource CancelButton}"
+					HorizontalAlignment="Right"
+					Margin="3"/>
+			<Button Grid.Column="2"
+					Content="{Binding OKLabel}"
 					Command="{Binding OkCommand}"
-					HorizontalAlignment="Right"/>
+					HorizontalAlignment="Right"
+					Margin="3"/>
 		</Grid>
 	</Grid>
 </Page>

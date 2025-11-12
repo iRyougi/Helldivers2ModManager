@@ -40,11 +40,26 @@ internal sealed partial class MainViewModel : ObservableObject
 		
 		// Listen to opacity changes from settings
 		_settingsService.PropertyChanged += SettingsService_PropertyChanged;
+		
+		// If settings is already initialized, update opacity immediately
+		// Otherwise, wait for initialization to complete
+		if (_settingsService.Initialized)
+		{
+			UpdateBackgroundOpacity();
+		}
 	}
 
 	private void SettingsService_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 	{
-		if (e.PropertyName == nameof(SettingsService.Opacity) && _settingsService.Initialized)
+		if (e.PropertyName == nameof(SettingsService.Opacity))
+		{
+			UpdateBackgroundOpacity();
+		}
+	}
+	
+	private void UpdateBackgroundOpacity()
+	{
+		if (_settingsService.Initialized)
 		{
 			_background.Color = Color.FromScRgb(_settingsService.Opacity, 0, 0, 0);
 		}

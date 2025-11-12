@@ -15,7 +15,7 @@ internal partial class App : Application
 {
 	public static readonly Version Version = new(1, 3, 0, 2); //版本号
 
-	public static readonly string? VersionAddition = "alpha test"; //版本附加信息
+	public static readonly string? VersionAddition = "Beta Test"; //版本附加信息
 
     public new static App Current => (App)Application.Current;
 
@@ -51,7 +51,7 @@ internal partial class App : Application
 		_logger = Host.Services.GetRequiredService<ILogger<App>>();
 	}
 
-	protected override void OnStartup(StartupEventArgs e)
+	protected override async void OnStartup(StartupEventArgs e)
 	{
 		base.OnStartup(e);
 
@@ -63,20 +63,19 @@ internal partial class App : Application
 		Current.Resources.Add("LocalizationService", localizationService);
 		
 		// Load settings first to get the language preference
-		_ = Task.Run(async () =>
+		// Wait for initialization to complete before creating the window
+		try
 		{
-			try
-			{
-				await settingsService.InitAsync(true);
-				var language = settingsService.Language;
-				await localizationService.InitializeAsync(language);
-			}
-			catch
-			{
-				await localizationService.InitializeAsync("en");
-			}
-		});
+			await settingsService.InitAsync(true);
+			var language = settingsService.Language;
+			await localizationService.InitializeAsync(language);
+		}
+		catch
+		{
+			await localizationService.InitializeAsync("en");
+		}
 
+		// Create and show window after settings are loaded
 		MainWindow = Host.Services.GetRequiredService<MainWindow>();
 		MainWindow.Show();
 	}

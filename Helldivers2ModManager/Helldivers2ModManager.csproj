@@ -47,6 +47,7 @@
 	  <Resource Include="Resources\Images\logo.png" />
 	  <Resource Include="Resources\Images\logo_icon.png" />
 	  <Resource Include="Resources\Images\remove.png" />
+	  <Resource Include="Resources\Images\update.png" />
 	</ItemGroup>
 
 	<ItemGroup>

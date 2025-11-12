@@ -228,17 +228,17 @@
 									-->
 									<Button Width="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=Self}}"
 											Padding="5"
-											VerticalContentAlignment="Center"
-											HorizontalContentAlignment="Center"
+											VerticalContentAlignment="Stretch"
+											HorizontalContentAlignment="Stretch"
 											Foreground="White"
 											ToolTipService.ToolTip="{Binding Path=DataContext.UpdateTooltip, RelativeSource={RelativeSource AncestorType=Page}}"
 											Command="{Binding DataContext.UpdateCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Page}}"
 											CommandParameter="{Binding}">
-										<TextBlock Text="↻" 
-												   FontSize="24" 
-												   FontWeight="Bold"
-												   VerticalAlignment="Center"
-												   HorizontalAlignment="Center"/>
+										<Rectangle Fill="{Binding Path=Foreground, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Button}}">
+											<Rectangle.OpacityMask>
+												<ImageBrush ImageSource="../Resources/Images/update.png"/>
+											</Rectangle.OpacityMask>
+										</Rectangle>
 									</Button>
 									<Button Width="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=Self}}"
 											Padding="5"

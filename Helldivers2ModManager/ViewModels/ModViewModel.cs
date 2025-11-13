@@ -30,6 +30,8 @@ internal sealed partial class ModViewModel : ObservableObject
 	public string DisplayName => !string.IsNullOrWhiteSpace(_alias) ? _alias : Name;
 
 	public string Description => _mod.Manifest.Description;
+	
+	public DateTime AddedTime => _mod.AddedTime;
 
 	public Visibility OptionsVisible
 	{

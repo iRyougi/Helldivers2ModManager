@@ -34,6 +34,12 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 	public string SearchLabel => _localizationService["Dashboard.Search"];
 	public string EditLabel => _localizationService["Dashboard.Edit"];
 	public string UpdateLabel => _localizationService["Dashboard.Update"];
+	public string AliasLabel => _localizationService["Dashboard.Alias"];
+	public string AliasTooltip => _localizationService["Dashboard.AliasTooltip"];
+	public string ModTitleDisplay => _localizationService["Dashboard.ModTitleDisplay"];
+	public string ModTitleOriginal => _localizationService["Dashboard.ModTitleOriginal"];
+	public string ModTitleAddedTime => _localizationService["Dashboard.ModTitleAddedTime"];
+	public string ModTitleClickHint => _localizationService["Dashboard.ModTitleClickHint"];
 	public string PurgeTooltip => _localizationService["Dashboard.PurgeTooltip"];
 	public string DeployTooltip => _localizationService["Dashboard.DeployTooltip"];
 	public string LaunchTooltip => _localizationService["Dashboard.LaunchTooltip"];
@@ -98,6 +104,12 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		OnPropertyChanged(nameof(SearchLabel));
 		OnPropertyChanged(nameof(EditLabel));
 		OnPropertyChanged(nameof(UpdateLabel));
+		OnPropertyChanged(nameof(AliasLabel));
+		OnPropertyChanged(nameof(AliasTooltip));
+		OnPropertyChanged(nameof(ModTitleDisplay));
+		OnPropertyChanged(nameof(ModTitleOriginal));
+		OnPropertyChanged(nameof(ModTitleAddedTime));
+		OnPropertyChanged(nameof(ModTitleClickHint));
 		OnPropertyChanged(nameof(PurgeTooltip));
 		OnPropertyChanged(nameof(DeployTooltip));
 		OnPropertyChanged(nameof(LaunchTooltip));
@@ -634,9 +646,11 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 	{
 		var currentAlias = modVm.Alias ?? modVm.Name;
 		
+		var message = $"{_localizationService["InputDialog.Message"]}\n{_localizationService["InputDialog.OriginalName"]} {modVm.Name}";
+		
 		var dialog = new InputDialog(
-			"编辑Mod别名 / Edit Mod Alias",
-			$"为此Mod设置一个自定义名称:\nOriginal name: {modVm.Name}",
+			_localizationService["InputDialog.Title"],
+			message,
 			currentAlias)
 		{
 			Owner = Application.Current.MainWindow

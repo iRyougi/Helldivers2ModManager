@@ -145,6 +145,10 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 			["Dashboard.Search"] = "Search:",
 			["Dashboard.Edit"] = "Edit",
 			["Dashboard.Update"] = "Update",
+			["Dashboard.ModTitleDisplay"] = "Display:",
+			["Dashboard.ModTitleOriginal"] = "Original:",
+			["Dashboard.ModTitleAddedTime"] = "Added to Manager:",
+			["Dashboard.ModTitleClickHint"] = "Click to edit alias",
 			["Dashboard.PurgeTooltip"] = "Removes all patch files from the game data directory.",
 			["Dashboard.DeployTooltip"] = "Installs all selected mod patch files into the game data directory.",
 			["Dashboard.LaunchTooltip"] = "Runs the game through Steam.",
@@ -194,6 +198,13 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 			["MessageBox.Cancel"] = "Cancel",
 			["MessageBox.Yes"] = "Yes",
 			["MessageBox.No"] = "No",
+			
+			// InputDialog
+			["InputDialog.Title"] = "Edit Mod Alias",
+			["InputDialog.Message"] = "Set a custom alias for this mod:",
+			["InputDialog.OriginalName"] = "Original name:",
+			["InputDialog.OK"] = "OK",
+			["InputDialog.Cancel"] = "CANCEL",
 			
 			// Messages
 			["Message.LoadingSettings"] = "Loading settings",
@@ -287,6 +298,10 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 			["Dashboard.Search"] = "搜索：",
 			["Dashboard.Edit"] = "编辑",
 			["Dashboard.Update"] = "更新",
+			["Dashboard.ModTitleDisplay"] = "显示名称：",
+			["Dashboard.ModTitleOriginal"] = "原始名称：",
+			["Dashboard.ModTitleAddedTime"] = "添加进管理器的时间：",
+			["Dashboard.ModTitleClickHint"] = "点击编辑别名",
 			["Dashboard.PurgeTooltip"] = "从游戏数据目录中删除所有补丁文件。",
 			["Dashboard.DeployTooltip"] = "将所有选定的模组补丁文件安装到游戏数据目录中。",
 			["Dashboard.LaunchTooltip"] = "通过Steam运行游戏。",
@@ -336,6 +351,13 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 			["MessageBox.Cancel"] = "取消",
 			["MessageBox.Yes"] = "是",
 			["MessageBox.No"] = "否",
+			
+			// InputDialog
+			["InputDialog.Title"] = "编辑Mod别名",
+			["InputDialog.Message"] = "为此Mod设置一个自定义名称：",
+			["InputDialog.OriginalName"] = "原名称:",
+			["InputDialog.OK"] = "设置",
+			["InputDialog.Cancel"] = "取消",
 			
 			// Messages
 			["Message.LoadingSettings"] = "正在加载设置",

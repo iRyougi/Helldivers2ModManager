@@ -7,7 +7,10 @@
         Width="400"
         WindowStartupLocation="CenterOwner"
         Background="#1a1a1a"
-        ResizeMode="NoResize">
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        BorderBrush="DarkGray"
+        BorderThickness="2">
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -35,17 +38,21 @@
         <StackPanel Grid.Row="3"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right">
-            <Button Content="OK"
-                    IsDefault="True"
-                    Click="OkButton_Click"
-                    Style="{DynamicResource ConfirmButton}"
-                    Padding="20,5"
-                    Margin="0,0,10,0"/>
-            <Button Content="Cancel"
+            <Button Name="CancelButton"
+                    Content="Cancel"
                     IsCancel="True"
                     Click="CancelButton_Click"
                     Style="{DynamicResource CancelButton}"
-                    Padding="20,5"/>
+                    Width="100"
+                    Height="35"
+                    Margin="0,0,10,0"/>
+            <Button Name="OkButton"
+                    Content="OK"
+                    IsDefault="True"
+                    Click="OkButton_Click"
+                    Style="{DynamicResource ConfirmButton}"
+                    Width="100"
+                    Height="35"/>
         </StackPanel>
     </Grid>
 </Window>

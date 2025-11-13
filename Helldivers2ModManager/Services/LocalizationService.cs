@@ -15,6 +15,10 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 
 	public ObservableCollection<string> AvailableLanguages { get; } = new();
 	
+	// Version number for tracking language file updates
+	// Increment this whenever you update translations
+	private const int CurrentTranslationVersion = 2;
+	
 	public string CurrentLanguage
 	{
 		get => _currentLanguage;
@@ -41,7 +45,7 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 		}
 	}
 
-	private static readonly DirectoryInfo s_languageDir = new("Languages");
+	private static readonly DirectoryInfo s_languageDir = new("languages");
 	private readonly ILogger<LocalizationService> _logger;
 	private readonly Dictionary<string, string> _translations = new();
 	private string _currentLanguage = "en";
@@ -61,6 +65,11 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 			s_languageDir.Create();
 			await CreateDefaultLanguageFilesAsync();
 		}
+		else
+		{
+			// Check if language files need updating
+			await UpdateLanguageFilesIfNeededAsync();
+		}
 
 		LoadAvailableLanguages();
 		
@@ -71,6 +80,58 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 		_currentLanguage = language;
 		
 		_logger.LogInformation("Localization service initialized with language: {}", language);
+	}
+
+	private async Task UpdateLanguageFilesIfNeededAsync()
+	{
+		_logger.LogInformation("Checking language file versions");
+		
+		var languageFiles = s_languageDir.GetFiles("*.json");
+		bool needsUpdate = false;
+
+		foreach (var file in languageFiles)
+		{
+			try
+			{
+				var json = await File.ReadAllTextAsync(file.FullName);
+				var doc = JsonDocument.Parse(json);
+				var root = doc.RootElement;
+
+				// Check if version property exists and matches
+				if (root.TryGetProperty("__version", out var versionProp))
+				{
+					var version = versionProp.GetInt32();
+					if (version < CurrentTranslationVersion)
+					{
+						_logger.LogInformation("Language file {} is outdated (version {} < {})", file.Name, version, CurrentTranslationVersion);
+						needsUpdate = true;
+						break;
+					}
+				}
+				else
+				{
+					_logger.LogInformation("Language file {} has no version, needs update", file.Name);
+					needsUpdate = true;
+					break;
+				}
+			}
+			catch (Exception ex)
+			{
+				_logger.LogWarning(ex, "Failed to check version for {}", file.Name);
+				needsUpdate = true;
+				break;
+			}
+		}
+
+		if (needsUpdate)
+		{
+			_logger.LogInformation("Updating language files to version {}", CurrentTranslationVersion);
+			await CreateDefaultLanguageFilesAsync();
+		}
+		else
+		{
+			_logger.LogInformation("Language files are up to date");
+		}
 	}
 
 	private void LoadAvailableLanguages()
@@ -104,20 +165,29 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 		try
 		{
 			var json = await File.ReadAllTextAsync(filePath);
-			var translations = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+			var document = JsonDocument.Parse(json);
+			var root = document.RootElement;
 			
-			if (translations != null)
+			_translations.Clear();
+			foreach (var property in root.EnumerateObject())
 			{
-				_translations.Clear();
-				foreach (var kvp in translations)
+				// Skip the version property
+				if (property.Name == "__version")
+					continue;
+					
+				if (property.Value.ValueKind == JsonValueKind.String)
 				{
-					_translations[kvp.Key] = kvp.Value;
+					var value = property.Value.GetString();
+					if (value != null)
+					{
+						_translations[property.Name] = value;
+					}
 				}
-				
-				// Notify all properties changed to update UI
-				OnPropertyChanged(string.Empty);
-				_logger.LogInformation("Loaded {} translations", _translations.Count);
 			}
+			
+			// Notify all properties changed to update UI
+			OnPropertyChanged(string.Empty);
+			_logger.LogInformation("Loaded {} translations", _translations.Count);
 		}
 		catch (Exception ex)
 		{
@@ -128,10 +198,12 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 	private async Task CreateDefaultLanguageFilesAsync()
 	{
 		// Create English language file
-		var enTranslations = new Dictionary<string, string>
+		var enTranslations = new Dictionary<string, object>
 		{
+			["__version"] = CurrentTranslationVersion,
+			
 			// Main Window
-			["Window.Title"] = "Mod Manager",
+			["Window.Title"] = "HD2 Mod Manager",
 			["Window.Help"] = "?",
 			
 			// Dashboard Page
@@ -145,39 +217,48 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 			["Dashboard.Search"] = "Search:",
 			["Dashboard.Edit"] = "Edit",
 			["Dashboard.Update"] = "Update",
-			["Dashboard.PurgeTooltip"] = "Removes all patch files from the games data directory.",
-			["Dashboard.DeployTooltip"] = "Installs all selected mods patch files into the games data directory.",
-			["Dashboard.LaunchTooltip"] = "Runs the game through steam.",
-			["Dashboard.UpdateTooltip"] = "Update this mod with a new version.",
+			["Dashboard.ModTitleDisplay"] = "Display:",
+			["Dashboard.ModTitleOriginal"] = "Original:",
+			["Dashboard.ModTitleAddedTime"] = "Added to Manager:",
+			["Dashboard.ModTitleClickHint"] = "Click to edit alias",
+			["Dashboard.PurgeTooltip"] = "Removes all patch files from the game data directory.",
+			["Dashboard.DeployTooltip"] = "Installs all selected mod patch files into the game data directory.",
+			["Dashboard.LaunchTooltip"] = "Runs the game through Steam.",
+			["Dashboard.UpdateTooltip"] = "Update the mod from an archive file.",
 			
 			// Settings Page
 			["Settings.Title"] = "Settings",
+			["Settings.GameDir"] = "Game Directory",
 			["Settings.GameDirectory"] = "Game Directory",
-			["Settings.GameDirectoryDesc"] = "This is the games directory where you want the mods to be installed.",
+			["Settings.GameDirectoryDesc"] = "This is where your Helldivers 2 game is installed.",
 			["Settings.GameDirectoryHint"] = "(Clicking \"...\" will prompt you to select the games directory)",
-			["Settings.AutoDetect"] = "Auto detect",
 			["Settings.StorageDirectory"] = "Storage Directory",
-			["Settings.StorageDirectoryDesc"] = "This is where files about all the managed mods are stored.",
+			["Settings.StorageDirectoryDesc"] = "This is where all manager and mod related files are stored.",
 			["Settings.StorageDirectoryWarning"] = "Purge before changing this as a record of the installed files is stored in this!",
 			["Settings.TempDirectory"] = "Temporary Directory",
-			["Settings.TempDirectoryDesc"] = "This is the directory where all temporary files will be stored. Examples are:",
+			["Settings.TempDirectoryDesc"] = "This is where temporary files are stored during extraction.",
 			["Settings.TempDirectoryItem1"] = "- Download files",
 			["Settings.TempDirectoryItem2"] = "- Staging files",
 			["Settings.TempDirectoryItem3"] = "- Decompressed files",
+			["Settings.AutoDetect"] = "Auto detect",
 			["Settings.Opacity"] = "Opacity",
-			["Settings.OpacityDesc"] = "Change the opacity of the window background.",
+			["Settings.OpacityDesc"] = "Sets the opacity of the window.",
 			["Settings.LogLevel"] = "Log Level",
-			["Settings.LogLevelDesc"] = "This sets the level of messages which should be logged to the log file. The option set and anything below it will be captured an logged.",
+			["Settings.LogLevelDesc"] = "Sets the verbosity of the logs.",
 			["Settings.LogLevelDefault"] = "By default only warnings and anything more severe will be logged.",
 			["Settings.Search"] = "Search",
 			["Settings.CaseSensitive"] = "Case Sensitive",
+			["Settings.CaseSensitiveDesc"] = "Makes the search case sensitive.",
 			["Settings.Utilities"] = "Utilities",
 			["Settings.Reset"] = "Reset",
-			["Settings.ResetDesc"] = "This will this will reset all the setting to their default values!",
+			["Settings.ResetDesc"] = "Restores all settings to their default values.",
 			["Settings.DevOptions"] = "Dev Options",
 			["Settings.SkipList"] = "Skip List",
 			["Settings.SkipListDesc"] = "This skips the 0th index of all specified files during deployment.",
+			["Settings.Back"] = "Back",
 			["Settings.OK"] = "OK",
+			["Settings.DiscardChangesTitle"] = "Discard Changes?",
+			["Settings.DiscardChangesMessage"] = "You have unsaved changes. Do you want to discard them and return to the main screen?",
 			["Settings.Language"] = "Language",
 			["Settings.LanguageDesc"] = "Select your preferred language for the interface.",
 			
@@ -190,12 +271,21 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 			["MessageBox.Yes"] = "Yes",
 			["MessageBox.No"] = "No",
 			
+			// InputDialog
+			["InputDialog.Title"] = "Edit Mod Alias",
+			["InputDialog.Message"] = "Set a custom alias for this mod:",
+			["InputDialog.OriginalName"] = "Original name:",
+			["InputDialog.OK"] = "OK",
+			["InputDialog.Cancel"] = "CANCEL",
+			
 			// Messages
 			["Message.LoadingSettings"] = "Loading settings",
 			["Message.PleaseWait"] = "Please wait democratically.",
 			["Message.LoadingSettingsFailed"] = "Loading settings failed!",
+			["Message.GoToSettingsNow"] = "Go to settings now?",
 			["Message.ResetSettingsConfirm"] = "Do you want to reset your settings?",
 			["Message.SavingSettings"] = "Saving Settings",
+			["Message.SavingModConfig"] = "Saving mod configuration",
 			["Message.GameDirEmpty"] = "Game directory can not be left empty!",
 			["Message.StorageDirEmpty"] = "Storage directory can not be left empty!",
 			["Message.TempDirEmpty"] = "Temporary directory can not be left empty!",
@@ -214,12 +304,31 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 			["Message.FileNameLengthError"] = "Archive file names can only be 16 characters long.",
 			["Message.LookingForGame"] = "Looking for game",
 			["Message.GameNotFound"] = "Your Helldivers 2 game could not be found automatically. Please set it manually.",
+			["Message.LoadingMods"] = "Loading mods",
+			["Message.LoadingModsFailedWithError"] = "Loading mods failed!\n\n{0}",
+			["Message.LoadingProfile"] = "Loading profile",
+			["Message.LoadingProfileFailedWithError"] = "Loading profile failed!\n\n{0}",
+			["Message.ProblemsLoadingMods"] = "Problems with loading mods:",
+			["Message.AddingMod"] = "Adding Mod",
+			["Message.ModAddingFailedProblems"] = "Mod adding failed due to problems:",
+			["Message.ModAddedWarnings"] = "Mod added with warnings:",
+			["Message.UnableToPurge"] = "Unable to purge! Helldivers 2 Path not set. Please go to settings.",
+			["Message.PurgingMods"] = "Purging Mods",
+			["Message.UnableToDeploy"] = "Unable to deploy! Helldivers 2 Path not set. Please go to settings.",
+			["Message.DeployingMods"] = "Deploying Mods",
+			["Message.DeploymentSuccess"] = "Deployment successful.",
+			["Message.RemovingMod"] = "Removing Mod",
+			["Message.UpdatingMod"] = "Updating Mod",
+			["Message.ModUpdateFailedProblems"] = "Mod update failed due to problems:",
+			["Message.ModUpdatedWarnings"] = "Mod updated with warnings:",
 			["Message.ModUpdatedSuccess"] = "Mod updated successfully and has been disabled.",
 			
 			// Dialog Titles
 			["Dialog.SelectGameFolder"] = "Please select you Helldivers 2 folder...",
 			["Dialog.SelectStorageFolder"] = "Please select a folder where you want this manager to store its mods...",
 			["Dialog.SelectTempFolder"] = "Please select a folder which you want this manager to use for temporary files...",
+			["Dialog.SelectModArchive"] = "Please select a mod archive to add...",
+			["Dialog.SelectModArchiveUpdate"] = "Please select a mod archive to update...",
 			
 			// Problem Messages
 			["Problem.Errors"] = "Errors:",
@@ -244,56 +353,67 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 		await File.WriteAllTextAsync(enPath, JsonSerializer.Serialize(enTranslations, new JsonSerializerOptions { WriteIndented = true }));
 		
 		// Create Chinese (Simplified) language file
-		var zhCnTranslations = new Dictionary<string, string>
+		var zhCnTranslations = new Dictionary<string, object>
 		{
+			["__version"] = CurrentTranslationVersion,
+			
 			// Main Window
-			["Window.Title"] = "模组管理器",
+			["Window.Title"] = "HD2 模组管理器",
 			["Window.Help"] = "?",
 			
 			// Dashboard Page
-			["Dashboard.Title"] = "控制台",
+			["Dashboard.Title"] = "控制面板",
 			["Dashboard.Add"] = "添加",
 			["Dashboard.ReportBug"] = "报告错误",
 			["Dashboard.Settings"] = "设置",
-			["Dashboard.Purge"] = "清除",
+			["Dashboard.Purge"] = "清理",
 			["Dashboard.Deploy"] = "部署",
 			["Dashboard.LaunchHD2"] = "启动游戏",
 			["Dashboard.Search"] = "搜索：",
 			["Dashboard.Edit"] = "编辑",
 			["Dashboard.Update"] = "更新",
+			["Dashboard.ModTitleDisplay"] = "显示名称：",
+			["Dashboard.ModTitleOriginal"] = "原始名称：",
+			["Dashboard.ModTitleAddedTime"] = "添加进管理器的时间：",
+			["Dashboard.ModTitleClickHint"] = "点击编辑别名",
 			["Dashboard.PurgeTooltip"] = "从游戏数据目录中删除所有补丁文件。",
-			["Dashboard.DeployTooltip"] = "将所有选中的模组补丁文件安装到游戏数据目录中。",
-			["Dashboard.LaunchTooltip"] = "通过Steam启动游戏。",
-			["Dashboard.UpdateTooltip"] = "使用新版本更新此模组。",
+			["Dashboard.DeployTooltip"] = "将所有选定的模组补丁文件安装到游戏数据目录中。",
+			["Dashboard.LaunchTooltip"] = "通过Steam运行游戏。",
+			["Dashboard.UpdateTooltip"] = "从存档文件更新此模组。",
 			
 			// Settings Page
 			["Settings.Title"] = "设置",
+			["Settings.GameDir"] = "游戏目录",
 			["Settings.GameDirectory"] = "游戏目录",
-			["Settings.GameDirectoryDesc"] = "这是您希望安装模组的游戏目录。",
-			["Settings.GameDirectoryHint"] = "（点击省略号按钮将提示您选择游戏目录）",
-			["Settings.AutoDetect"] = "自动检测",
+			["Settings.GameDirectoryDesc"] = "这是您的Helldivers 2游戏安装位置。",
+			["Settings.GameDirectoryHint"] = "（点击\"...\"将提示您选择游戏目录）",
 			["Settings.StorageDirectory"] = "存储目录",
-			["Settings.StorageDirectoryDesc"] = "这是存储所有管理的模组文件的位置。",
-			["Settings.StorageDirectoryWarning"] = "更改此处之前请先清除，因为已安装文件的记录存储在此处！",
+			["Settings.StorageDirectoryDesc"] = "这是存储所有管理器和模组相关文件的位置。",
+			["Settings.StorageDirectoryWarning"] = "在更改此项之前请先清理，因为已安装文件的记录存储在此！",
 			["Settings.TempDirectory"] = "临时目录",
-			["Settings.TempDirectoryDesc"] = "这是存储所有临时文件的目录，例如：",
+			["Settings.TempDirectoryDesc"] = "这是在提取过程中存储临时文件的位置。",
 			["Settings.TempDirectoryItem1"] = "- 下载文件",
 			["Settings.TempDirectoryItem2"] = "- 暂存文件",
 			["Settings.TempDirectoryItem3"] = "- 解压文件",
+			["Settings.AutoDetect"] = "自动检测",
 			["Settings.Opacity"] = "不透明度",
-			["Settings.OpacityDesc"] = "更改窗口背景的不透明度。",
+			["Settings.OpacityDesc"] = "设置窗口的不透明度。",
 			["Settings.LogLevel"] = "日志级别",
-			["Settings.LogLevelDesc"] = "设置应该记录到日志文件的消息级别。将捕获设置的选项及以下的所有内容。",
-			["Settings.LogLevelDefault"] = "默认情况下，仅记录警告及更严重的消息。",
+			["Settings.LogLevelDesc"] = "设置日志的详细程度。",
+			["Settings.LogLevelDefault"] = "默认情况下，只记录警告和更严重的信息。",
 			["Settings.Search"] = "搜索",
 			["Settings.CaseSensitive"] = "区分大小写",
+			["Settings.CaseSensitiveDesc"] = "使搜索区分大小写。",
 			["Settings.Utilities"] = "实用工具",
 			["Settings.Reset"] = "重置",
-			["Settings.ResetDesc"] = "这将将所有设置重置为默认值！",
+			["Settings.ResetDesc"] = "将所有设置恢复为默认值。",
 			["Settings.DevOptions"] = "开发者选项",
 			["Settings.SkipList"] = "跳过列表",
 			["Settings.SkipListDesc"] = "在部署期间跳过所有指定文件的第0个索引。",
+			["Settings.Back"] = "返回",
 			["Settings.OK"] = "确定",
+			["Settings.DiscardChangesTitle"] = "放弃更改？",
+			["Settings.DiscardChangesMessage"] = "您有未保存的更改。是否要放弃这些更改并返回主界面？",
 			["Settings.Language"] = "语言",
 			["Settings.LanguageDesc"] = "选择您喜欢的界面语言。",
 			
@@ -306,12 +426,21 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 			["MessageBox.Yes"] = "是",
 			["MessageBox.No"] = "否",
 			
+			// InputDialog
+			["InputDialog.Title"] = "编辑Mod别名",
+			["InputDialog.Message"] = "为此Mod设置一个自定义名称：",
+			["InputDialog.OriginalName"] = "原名称:",
+			["InputDialog.OK"] = "设置",
+			["InputDialog.Cancel"] = "取消",
+			
 			// Messages
 			["Message.LoadingSettings"] = "正在加载设置",
 			["Message.PleaseWait"] = "请民主地等待。",
 			["Message.LoadingSettingsFailed"] = "加载设置失败！",
+			["Message.GoToSettingsNow"] = "现在转到设置？",
 			["Message.ResetSettingsConfirm"] = "您想重置您的设置吗？",
 			["Message.SavingSettings"] = "正在保存设置",
+			["Message.SavingModConfig"] = "正在保存模组配置",
 			["Message.GameDirEmpty"] = "游戏目录不能为空！",
 			["Message.StorageDirEmpty"] = "存储目录不能为空！",
 			["Message.TempDirEmpty"] = "临时目录不能为空！",
@@ -330,12 +459,31 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 			["Message.FileNameLengthError"] = "存档文件名只能是16个字符长。",
 			["Message.LookingForGame"] = "正在查找游戏",
 			["Message.GameNotFound"] = "无法自动找到您的Helldivers 2游戏，请手动设置。",
+			["Message.LoadingMods"] = "正在加载模组",
+			["Message.LoadingModsFailedWithError"] = "加载模组失败！\n\n{0}",
+			["Message.LoadingProfile"] = "正在加载配置文件",
+			["Message.LoadingProfileFailedWithError"] = "加载配置文件失败！\n\n{0}",
+			["Message.ProblemsLoadingMods"] = "加载模组时出现问题：",
+			["Message.AddingMod"] = "正在添加模组",
+			["Message.ModAddingFailedProblems"] = "由于问题，添加模组失败：",
+			["Message.ModAddedWarnings"] = "已添加模组，但有警告：",
+			["Message.UnableToPurge"] = "无法清理！未设置Helldivers 2路径。请转到设置。",
+			["Message.PurgingMods"] = "正在清理模组",
+			["Message.UnableToDeploy"] = "无法部署！未设置Helldivers 2路径。请转到设置。",
+			["Message.DeployingMods"] = "正在部署模组",
+			["Message.DeploymentSuccess"] = "部署成功。",
+			["Message.RemovingMod"] = "正在移除模组",
+			["Message.UpdatingMod"] = "正在更新模组",
+			["Message.ModUpdateFailedProblems"] = "由于问题，更新模组失败：",
+			["Message.ModUpdatedWarnings"] = "已更新模组，但有警告：",
 			["Message.ModUpdatedSuccess"] = "模组更新成功并已被禁用。",
 			
 			// Dialog Titles
 			["Dialog.SelectGameFolder"] = "请选择您的Helldivers 2文件夹...",
 			["Dialog.SelectStorageFolder"] = "请选择一个文件夹，用于让管理器存储其模组...",
 			["Dialog.SelectTempFolder"] = "请选择一个供管理器用于存储临时文件的文件夹...",
+			["Dialog.SelectModArchive"] = "请选择要添加的模组存档...",
+			["Dialog.SelectModArchiveUpdate"] = "请选择要更新的模组存档...",
 			
 			// Problem Messages
 			["Problem.Errors"] = "错误：",

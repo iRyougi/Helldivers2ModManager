@@ -373,6 +373,16 @@ internal sealed class SettingsService : INotifyPropertyChanged
 
 		document.Dispose();
 		await stream.DisposeAsync();
+		
+		// Notify all property changes after reading settings
+		OnPropertyChanged(nameof(GameDirectory));
+		OnPropertyChanged(nameof(StorageDirectory));
+		OnPropertyChanged(nameof(TempDirectory));
+		OnPropertyChanged(nameof(LogLevel));
+		OnPropertyChanged(nameof(Opacity));
+		OnPropertyChanged(nameof(SkipList));
+		OnPropertyChanged(nameof(CaseSensitiveSearch));
+		OnPropertyChanged(nameof(Language));
 	}
 
 	[MemberNotNull(nameof(_gameDirectory), nameof(_storageDirectory), nameof(_tempDirectory), nameof(_skipList))]

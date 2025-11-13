@@ -12,21 +12,24 @@
 		<PlatformTarget>x64</PlatformTarget>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<ProductName>Helldivers 2 Mod Manager</ProductName>
+		<Authors>iRyougi</Authors>
 		<Company>KAMITSUBAKI STUDIO</Company>
-		<ProductVersion>1.3.0.2 alpha 1</ProductVersion>
+		<ProductVersion>1.3.0.2 beta 1</ProductVersion>
 		<AssemblyVersion>1.3.0.2</AssemblyVersion>
 		<FileVersion>1.3.0.2</FileVersion>
 		<PublishSingleFile>true</PublishSingleFile>
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Resource Include="Resources\Fonts\FS Sinclair Bold.otf" />
-	  <Resource Include="Resources\Fonts\FS Sinclair Medium.otf" />
-	  <Resource Include="Resources\Fonts\FS Sinclair Regular.otf" />
-	  <Resource Include="Resources\Images\discord_icon.png" />
-	  <Content Include="Resources\Images\icon.ico">
-	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-	  </Content>
+		<Resource Include="Resources\Fonts\FS Sinclair Bold.otf" />
+		<Resource Include="Resources\Fonts\FS Sinclair Medium.otf" />
+		<Resource Include="Resources\Fonts\FS Sinclair Regular.otf" />
+		<Resource Include="Resources\Images\discord_icon.png" />
+		<Content Include="bin\Debug\net8.0-windows\languages\en.json" />
+		<Content Include="bin\Debug\net8.0-windows\languages\zh-cn.json" />
+		<Content Include="Resources\Images\icon.ico">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</Content>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -44,6 +47,7 @@
 	  <Resource Include="Resources\Images\logo.png" />
 	  <Resource Include="Resources\Images\logo_icon.png" />
 	  <Resource Include="Resources\Images\remove.png" />
+	  <Resource Include="Resources\Images\update.png" />
 	</ItemGroup>
 
 	<ItemGroup>

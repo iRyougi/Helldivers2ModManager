@@ -39,16 +39,14 @@
 					<RowDefinition Height="*"/>
 					<RowDefinition Height="Auto"/>
 				</Grid.RowDefinitions>
-				<ScrollViewer Grid.Row="0"
-							  Margin="3"
-							  Padding="3"
-							  VerticalScrollBarVisibility="Auto"
-							  HorizontalScrollBarVisibility="Auto">
-					<TextBlock x:Name="message"
-							   Foreground="WhiteSmoke"
-							   FontSize="16"
-							   FontFamily="Sanserif"/>
-				</ScrollViewer>
+				<TextBlock Grid.Row="0"
+						   x:Name="message"
+						   Foreground="WhiteSmoke"
+						   FontSize="16"
+						   FontFamily="Sanserif"
+						   TextWrapping="Wrap"
+						   Margin="10"
+						   Padding="3"/>
 				<TextBox Grid.Row="1"
 						 x:Name="input"
 						 Margin="3"/>
@@ -65,14 +63,23 @@
 					Click="OkButton_Click"/>
 			<Grid Grid.Row="2"
 				  x:Name="yesNoStack">
-				<Button x:Name="yesButton"
-						Content="Yes"
-						Click="YesButton_Click"
-						HorizontalAlignment="Left"/>
-				<Button x:Name="noButton"
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*"/>
+					<ColumnDefinition Width="Auto"/>
+					<ColumnDefinition Width="Auto"/>
+				</Grid.ColumnDefinitions>
+				<Button Grid.Column="1"
+						x:Name="noButton"
 						Content="No"
 						Click="NoButton_Click"
-						HorizontalAlignment="Right"/>
+						HorizontalAlignment="Right"
+						Margin="3,3,0,3"/>
+				<Button Grid.Column="2"
+						x:Name="yesButton"
+						Content="Yes"
+						Click="YesButton_Click"
+						HorizontalAlignment="Right"
+						Margin="3"/>
 			</Grid>
 			<ProgressBar Grid.Row="2"
 						 x:Name="progress"

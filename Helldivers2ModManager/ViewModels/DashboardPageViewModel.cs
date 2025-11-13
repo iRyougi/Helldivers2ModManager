@@ -34,6 +34,12 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 	public string SearchLabel => _localizationService["Dashboard.Search"];
 	public string EditLabel => _localizationService["Dashboard.Edit"];
 	public string UpdateLabel => _localizationService["Dashboard.Update"];
+	public string AliasLabel => _localizationService["Dashboard.Alias"];
+	public string AliasTooltip => _localizationService["Dashboard.AliasTooltip"];
+	public string ModTitleDisplay => _localizationService["Dashboard.ModTitleDisplay"];
+	public string ModTitleOriginal => _localizationService["Dashboard.ModTitleOriginal"];
+	public string ModTitleAddedTime => _localizationService["Dashboard.ModTitleAddedTime"];
+	public string ModTitleClickHint => _localizationService["Dashboard.ModTitleClickHint"];
 	public string PurgeTooltip => _localizationService["Dashboard.PurgeTooltip"];
 	public string DeployTooltip => _localizationService["Dashboard.DeployTooltip"];
 	public string LaunchTooltip => _localizationService["Dashboard.LaunchTooltip"];
@@ -53,6 +59,7 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 	private readonly SettingsService _settingsService;
 	private readonly ProfileService _profileService;
 	private readonly LocalizationService _localizationService;
+	private readonly ModAliasService _aliasService;
 	private ObservableCollection<ModViewModel> _mods;
 	[ObservableProperty]
 	private Visibility _editVisibility = Visibility.Hidden;
@@ -63,7 +70,7 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 	[ObservableProperty]
 	private bool _initialized = false;
 
-	public DashboardPageViewModel(ILogger<DashboardPageViewModel> logger, IServiceProvider provider, SettingsService settingsService, ModService modService, ProfileService profileService, LocalizationService localizationService)
+	public DashboardPageViewModel(ILogger<DashboardPageViewModel> logger, IServiceProvider provider, SettingsService settingsService, ModService modService, ProfileService profileService, LocalizationService localizationService, ModAliasService aliasService)
 	{
 		_logger = logger;
 		_navStore = new(provider.GetRequiredService<NavigationStore>);
@@ -71,6 +78,7 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		_modService = modService;
 		_profileService = profileService;
 		_localizationService = localizationService;
+		_aliasService = aliasService;
 		_mods = [];
 
 		// Listen to language changes
@@ -96,6 +104,12 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		OnPropertyChanged(nameof(SearchLabel));
 		OnPropertyChanged(nameof(EditLabel));
 		OnPropertyChanged(nameof(UpdateLabel));
+		OnPropertyChanged(nameof(AliasLabel));
+		OnPropertyChanged(nameof(AliasTooltip));
+		OnPropertyChanged(nameof(ModTitleDisplay));
+		OnPropertyChanged(nameof(ModTitleOriginal));
+		OnPropertyChanged(nameof(ModTitleAddedTime));
+		OnPropertyChanged(nameof(ModTitleClickHint));
 		OnPropertyChanged(nameof(PurgeTooltip));
 		OnPropertyChanged(nameof(DeployTooltip));
 		OnPropertyChanged(nameof(LaunchTooltip));
@@ -118,11 +132,14 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 	{
 		WeakReferenceMessenger.Default.Send(new MessageBoxProgressMessage()
 		{
-			Title = "Saving mod configuration",
-			Message = "Please wait democratically."
+			Title = _localizationService["Message.SavingModConfig"],
+			Message = _localizationService["Message.PleaseWait"]
 		});
 
 		await _profileService.SaveAsync(_settingsService, _mods.Select(static vm => vm.Data));
+		
+		// Save aliases as well
+		await _aliasService.SaveAsync();
 
 		WeakReferenceMessenger.Default.Send(new MessageBoxHideMessage());
 	}
@@ -135,8 +152,12 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 			Mods = _mods.Where(vm =>
 			{
 				if (_settingsService.CaseSensitiveSearch)
-					return vm.Name.Contains(SearchText, StringComparison.InvariantCulture);
-				return vm.Name.Contains(SearchText, StringComparison.InvariantCultureIgnoreCase);
+				{
+					return vm.DisplayName.Contains(SearchText, StringComparison.InvariantCulture) ||
+					       vm.Name.Contains(SearchText, StringComparison.InvariantCulture);
+				}
+				return vm.DisplayName.Contains(SearchText, StringComparison.InvariantCultureIgnoreCase) ||
+				       vm.Name.Contains(SearchText, StringComparison.InvariantCultureIgnoreCase);
 			}).ToArray();
 		OnPropertyChanged(nameof(Mods));
 	}
@@ -148,8 +169,8 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		_logger.LogInformation("Loading settings...");
 		WeakReferenceMessenger.Default.Send(new MessageBoxProgressMessage
 		{
-			Title = "Loading settings",
-			Message = "Please wait democratically.",
+			Title = _localizationService["Message.LoadingSettings"],
+			Message = _localizationService["Message.PleaseWait"],
 		});
 		try
 		{
@@ -161,8 +182,8 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 			_logger.LogError(ex, "Loading settings failed");
 			WeakReferenceMessenger.Default.Send(new MessageBoxConfirmMessage
 			{
-				Title = $"Loading settings failed!",
-				Message = "Go to settings now?",
+				Title = _localizationService["Message.LoadingSettingsFailed"],
+				Message = _localizationService["Message.GoToSettingsNow"],
 				Confirm = _navStore.Value.Navigate<SettingsPageViewModel>,
 			});
 			return;
@@ -176,19 +197,23 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 			_logger.LogError("Settings invalid");
 			WeakReferenceMessenger.Default.Send(new MessageBoxConfirmMessage
 			{
-				Title = $"Settings invalid!",
-				Message = "Go to settings now?",
+				Title = _localizationService["Message.InvalidSettings"],
+				Message = _localizationService["Message.GoToSettingsNow"],
 				Confirm = _navStore.Value.Navigate<SettingsPageViewModel>,
 			});
 			return;
 		}
 		_logger.LogInformation("Settings valid");
 		
+		// Initialize alias service
+		_logger.LogInformation("Loading mod aliases...");
+		await _aliasService.InitAsync(_settingsService);
+		
 		_logger.LogInformation("Loading mods...");
 		WeakReferenceMessenger.Default.Send(new MessageBoxProgressMessage
 		{
-			Title = "Loading mods",
-			Message = "Please wait democratically.",
+			Title = _localizationService["Message.LoadingMods"],
+			Message = _localizationService["Message.PleaseWait"],
 		});
 		ModProblem[] problems;
 		try
@@ -200,7 +225,7 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 			_logger.LogError(ex, "Loading mods failed");
 			WeakReferenceMessenger.Default.Send(new MessageBoxErrorMessage
 			{
-				Message = $"Loading mods failed!\n\n{ex}",
+				Message = string.Format(_localizationService["Message.LoadingModsFailedWithError"], ex),
 			});
 			return;
 		}
@@ -215,8 +240,8 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		_logger.LogInformation("Loading profile...");
 		WeakReferenceMessenger.Default.Send(new MessageBoxProgressMessage
 		{
-			Title = "Loading profile",
-			Message = "Please wait democratically.",
+			Title = _localizationService["Message.LoadingProfile"],
+			Message = _localizationService["Message.PleaseWait"],
 		});
 		IReadOnlyList<ModData>? result;
 		try
@@ -229,7 +254,7 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 			_logger.LogError(ex, "Loading profile failed");
 			WeakReferenceMessenger.Default.Send(new MessageBoxErrorMessage
 			{
-				Message = $"Loading profile failed!\n\n{ex}",
+				Message = string.Format(_localizationService["Message.LoadingProfileFailedWithError"], ex),
 			});
 			return;
 		}
@@ -237,11 +262,16 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		_logger.LogInformation("Profile loaded successfully");
 
 		_logger.LogInformation("Applying profile");
-		_mods = new(result.Select(static data => new ModViewModel(data)).ToList());
+		_mods = new(result.Select(data =>
+		{
+			var vm = new ModViewModel(data);
+			vm.SetAliasService(_aliasService);
+			return vm;
+		}).ToList());
 		UpdateView();
 
 		if (problems.Length > 0)
-			ShowProblems(problems, "Problems with loading mods:", false, true);
+			ShowProblems(problems, _localizationService["Message.ProblemsLoadingMods"], false, true);
 		Initialized = true;
 		_logger.LogInformation("Initialization successful");
 
@@ -324,7 +354,9 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 
 	private void ModService_ModAdded(ModData mod)
 	{
-		_mods.Add(new ModViewModel(mod));
+		var vm = new ModViewModel(mod);
+		vm.SetAliasService(_aliasService);
+		_mods.Add(vm);
 		SearchText = string.Empty;
 	}
 
@@ -345,15 +377,15 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 			InitialDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Download"),
 			Filter = "Archive|*.rar;*.7z;*.zip;*.tar",
 			Multiselect = false,
-			Title = "Please select a mod archive to add..."
+			Title = _localizationService["Dialog.SelectModArchive"]
 		};
 
 		if (dialog.ShowDialog() ?? false)
 		{
 			WeakReferenceMessenger.Default.Send(new MessageBoxProgressMessage
 			{
-				Title = "Adding Mod",
-				Message = "Please wait democratically."
+				Title = _localizationService["Message.AddingMod"],
+				Message = _localizationService["Message.PleaseWait"]
 			});
 			try
 			{
@@ -362,8 +394,8 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 				{
 					var error = problems.Any(static p => p.IsError);
 					var prefix = error
-						? "Mod adding failed due to problems:"
-						: "Mod added with warnings:";
+						? _localizationService["Message.ModAddingFailedProblems"]
+						: _localizationService["Message.ModAddedWarnings"];
 					ShowProblems(problems, prefix, error);
 				}
 				else
@@ -414,15 +446,15 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		{
 			WeakReferenceMessenger.Default.Send(new MessageBoxErrorMessage()
 			{
-				Message = "Unable to purge! Helldivers 2 Path not set. Please go to settings."
+				Message = _localizationService["Message.UnableToPurge"]
 			});
 			return;
 		}
 
 		WeakReferenceMessenger.Default.Send(new MessageBoxProgressMessage()
 		{
-			Title = "Purging Mods",
-			Message = "Please wait democratically."
+			Title = _localizationService["Message.PurgingMods"],
+			Message = _localizationService["Message.PleaseWait"]
 		});
 
 		await _modService.PurgeAsync();
@@ -437,15 +469,15 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		{
 			WeakReferenceMessenger.Default.Send(new MessageBoxErrorMessage()
 			{
-				Message = "Unable to deploy! Helldivers 2 Path not set. Please go to settings."
+				Message = _localizationService["Message.UnableToDeploy"]
 			});
 			return;
 		}
 
 		WeakReferenceMessenger.Default.Send(new MessageBoxProgressMessage()
 		{
-			Title = "Deploying Mods",
-			Message = "Please wait democratically."
+			Title = _localizationService["Message.DeployingMods"],
+			Message = _localizationService["Message.PleaseWait"]
 		});
 
 		var mods = _mods.Where(static vm => vm.Enabled).ToArray();
@@ -459,7 +491,7 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 
 			WeakReferenceMessenger.Default.Send(new MessageBoxInfoMessage()
 			{
-				Message = "Deployment successful."
+				Message = _localizationService["Message.DeploymentSuccess"]
 			});
 		}
 		catch(Exception ex)
@@ -495,8 +527,8 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 	{
 		WeakReferenceMessenger.Default.Send(new MessageBoxProgressMessage()
 		{
-			Title = "Removing Mod",
-			Message = "Please wait democratically."
+			Title = _localizationService["Message.RemovingMod"],
+			Message = _localizationService["Message.PleaseWait"]
 		});
 
 		try
@@ -525,15 +557,15 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 			InitialDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Download"),
 			Filter = "Archive|*.rar;*.7z;*.zip;*.tar",
 			Multiselect = false,
-			Title = "Please select a mod archive to update..."
+			Title = _localizationService["Dialog.SelectModArchiveUpdate"]
 		};
 
 		if (dialog.ShowDialog() ?? false)
 		{
 			WeakReferenceMessenger.Default.Send(new MessageBoxProgressMessage
 			{
-				Title = "Updating Mod",
-				Message = "Please wait democratically."
+				Title = _localizationService["Message.UpdatingMod"],
+				Message = _localizationService["Message.PleaseWait"]
 			});
 			try
 			{
@@ -542,8 +574,8 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 				{
 					var error = problems.Any(static p => p.IsError);
 					var prefix = error
-						? "Mod update failed due to problems:"
-						: "Mod updated with warnings:";
+						? _localizationService["Message.ModUpdateFailedProblems"]
+						: _localizationService["Message.ModUpdatedWarnings"];
 					ShowProblems(problems, prefix, error);
 				}
 				else
@@ -607,5 +639,36 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 	void ClearSearch()
 	{
 		SearchText = string.Empty;
+	}
+
+	[RelayCommand]
+	async Task EditAlias(ModViewModel modVm)
+	{
+		var currentAlias = modVm.Alias ?? modVm.Name;
+		
+		var message = $"{_localizationService["InputDialog.Message"]}\n{_localizationService["InputDialog.OriginalName"]} {modVm.Name}";
+		
+		var dialog = new InputDialog(
+			_localizationService["InputDialog.Title"],
+			message,
+			currentAlias)
+		{
+			Owner = Application.Current.MainWindow
+		};
+
+		if (dialog.ShowDialog() == true)
+		{
+			var newAlias = dialog.InputText.Trim();
+			// If the new alias is the same as original name or empty, remove the alias
+			if (string.IsNullOrWhiteSpace(newAlias) || newAlias == modVm.Name)
+			{
+				modVm.UpdateAlias(null);
+			}
+			else
+			{
+				modVm.UpdateAlias(newAlias);
+			}
+			await _aliasService.SaveAsync();
+		}
 	}
 }

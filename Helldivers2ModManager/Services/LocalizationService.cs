@@ -15,6 +15,10 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 
 	public ObservableCollection<string> AvailableLanguages { get; } = new();
 	
+	// Version number for tracking language file updates
+	// Increment this whenever you update translations
+	private const int CurrentTranslationVersion = 2;
+	
 	public string CurrentLanguage
 	{
 		get => _currentLanguage;
@@ -61,6 +65,11 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 			s_languageDir.Create();
 			await CreateDefaultLanguageFilesAsync();
 		}
+		else
+		{
+			// Check if language files need updating
+			await UpdateLanguageFilesIfNeededAsync();
+		}
 
 		LoadAvailableLanguages();
 		
@@ -71,6 +80,58 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 		_currentLanguage = language;
 		
 		_logger.LogInformation("Localization service initialized with language: {}", language);
+	}
+
+	private async Task UpdateLanguageFilesIfNeededAsync()
+	{
+		_logger.LogInformation("Checking language file versions");
+		
+		var languageFiles = s_languageDir.GetFiles("*.json");
+		bool needsUpdate = false;
+
+		foreach (var file in languageFiles)
+		{
+			try
+			{
+				var json = await File.ReadAllTextAsync(file.FullName);
+				var doc = JsonDocument.Parse(json);
+				var root = doc.RootElement;
+
+				// Check if version property exists and matches
+				if (root.TryGetProperty("__version", out var versionProp))
+				{
+					var version = versionProp.GetInt32();
+					if (version < CurrentTranslationVersion)
+					{
+						_logger.LogInformation("Language file {} is outdated (version {} < {})", file.Name, version, CurrentTranslationVersion);
+						needsUpdate = true;
+						break;
+					}
+				}
+				else
+				{
+					_logger.LogInformation("Language file {} has no version, needs update", file.Name);
+					needsUpdate = true;
+					break;
+				}
+			}
+			catch (Exception ex)
+			{
+				_logger.LogWarning(ex, "Failed to check version for {}", file.Name);
+				needsUpdate = true;
+				break;
+			}
+		}
+
+		if (needsUpdate)
+		{
+			_logger.LogInformation("Updating language files to version {}", CurrentTranslationVersion);
+			await CreateDefaultLanguageFilesAsync();
+		}
+		else
+		{
+			_logger.LogInformation("Language files are up to date");
+		}
 	}
 
 	private void LoadAvailableLanguages()
@@ -104,20 +165,29 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 		try
 		{
 			var json = await File.ReadAllTextAsync(filePath);
-			var translations = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+			var document = JsonDocument.Parse(json);
+			var root = document.RootElement;
 			
-			if (translations != null)
+			_translations.Clear();
+			foreach (var property in root.EnumerateObject())
 			{
-				_translations.Clear();
-				foreach (var kvp in translations)
+				// Skip the version property
+				if (property.Name == "__version")
+					continue;
+					
+				if (property.Value.ValueKind == JsonValueKind.String)
 				{
-					_translations[kvp.Key] = kvp.Value;
+					var value = property.Value.GetString();
+					if (value != null)
+					{
+						_translations[property.Name] = value;
+					}
 				}
-				
-				// Notify all properties changed to update UI
-				OnPropertyChanged(string.Empty);
-				_logger.LogInformation("Loaded {} translations", _translations.Count);
 			}
+			
+			// Notify all properties changed to update UI
+			OnPropertyChanged(string.Empty);
+			_logger.LogInformation("Loaded {} translations", _translations.Count);
 		}
 		catch (Exception ex)
 		{
@@ -128,8 +198,10 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 	private async Task CreateDefaultLanguageFilesAsync()
 	{
 		// Create English language file
-		var enTranslations = new Dictionary<string, string>
+		var enTranslations = new Dictionary<string, object>
 		{
+			["__version"] = CurrentTranslationVersion,
+			
 			// Main Window
 			["Window.Title"] = "HD2 Mod Manager",
 			["Window.Help"] = "?",
@@ -281,8 +353,10 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 		await File.WriteAllTextAsync(enPath, JsonSerializer.Serialize(enTranslations, new JsonSerializerOptions { WriteIndented = true }));
 		
 		// Create Chinese (Simplified) language file
-		var zhCnTranslations = new Dictionary<string, string>
+		var zhCnTranslations = new Dictionary<string, object>
 		{
+			["__version"] = CurrentTranslationVersion,
+			
 			// Main Window
 			["Window.Title"] = "HD2 模组管理器",
 			["Window.Help"] = "?",

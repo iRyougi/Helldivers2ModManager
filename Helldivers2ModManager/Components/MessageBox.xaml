@@ -69,15 +69,15 @@
 					<ColumnDefinition Width="Auto"/>
 				</Grid.ColumnDefinitions>
 				<Button Grid.Column="1"
-						x:Name="yesButton"
-						Content="Yes"
-						Click="YesButton_Click"
-						HorizontalAlignment="Right"
-						Margin="3,3,0,3"/>
-				<Button Grid.Column="2"
 						x:Name="noButton"
 						Content="No"
 						Click="NoButton_Click"
+						HorizontalAlignment="Right"
+						Margin="3,3,0,3"/>
+				<Button Grid.Column="2"
+						x:Name="yesButton"
+						Content="Yes"
+						Click="YesButton_Click"
 						HorizontalAlignment="Right"
 						Margin="3"/>
 			</Grid>

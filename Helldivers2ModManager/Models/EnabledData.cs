@@ -13,6 +13,8 @@ internal readonly struct EnabledData : IJsonSerializable<EnabledData>
 	public required bool[] Toggled { get; init; }
 
 	public required int[] Selected { get; init; }
+	
+	public DateTime? AddedTime { get; init; }
 
 	public static EnabledData Deserialize(JsonElement root, ILogger? logger = null)
 	{
@@ -36,12 +38,20 @@ internal readonly struct EnabledData : IJsonSerializable<EnabledData>
 		for (int i = 0; i < arr.Length; i++)
 			selected[i] = arr[i].GetInt32();
 
+		DateTime? addedTime = null;
+		if (root.TryGetProperty(nameof(AddedTime), out var timeProp) && timeProp.ValueKind == JsonValueKind.String)
+		{
+			if (DateTime.TryParse(timeProp.GetString(), out var dt))
+				addedTime = dt;
+		}
+
 		return new EnabledData
 		{
 			Guid = guid,
 			Enabled = enabled,
 			Toggled = toggled,
 			Selected = selected,
+			AddedTime = addedTime
 		};
 	}
 
@@ -58,6 +68,8 @@ internal readonly struct EnabledData : IJsonSerializable<EnabledData>
 		foreach (var elm in Selected)
 			writer.WriteNumberValue(elm);
 		writer.WriteEndArray();
+		if (AddedTime.HasValue)
+			writer.WriteString(nameof(AddedTime), AddedTime.Value.ToString("o"));
 		writer.WriteEndObject();
 	}
 

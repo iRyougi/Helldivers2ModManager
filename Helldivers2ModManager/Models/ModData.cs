@@ -10,6 +10,8 @@ internal sealed class ModData(DirectoryInfo dir, IModManifest manifest)
 
     public bool Enabled { get; set; } = true;
 
+    public DateTime AddedTime { get; set; } = DateTime.Now;
+
     public bool[] EnabledOptions { get; private set; } = manifest.Version switch
     {
         ManifestVersion.Legacy => [],
@@ -31,6 +33,8 @@ internal sealed class ModData(DirectoryInfo dir, IModManifest manifest)
         Enabled = data.Enabled;
         EnabledOptions = data.Toggled;
 		SelectedOptions = data.Selected;
+		if (data.AddedTime.HasValue)
+			AddedTime = data.AddedTime.Value;
     }
 
     public EnabledData ToEnabledData()
@@ -41,6 +45,7 @@ internal sealed class ModData(DirectoryInfo dir, IModManifest manifest)
             Enabled = Enabled,
             Toggled = EnabledOptions,
             Selected = SelectedOptions,
+            AddedTime = AddedTime
         };
     }
 }

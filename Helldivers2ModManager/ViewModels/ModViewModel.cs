@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Helldivers2ModManager.Models;
+using Helldivers2ModManager.Services;
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
@@ -13,7 +14,24 @@ internal sealed partial class ModViewModel : ObservableObject
 
 	public string Name => _mod.Manifest.Name;
 
+	private string? _alias;
+	public string? Alias
+	{
+		get => _alias;
+		set
+		{
+			if (SetProperty(ref _alias, value))
+			{
+				OnPropertyChanged(nameof(DisplayName));
+			}
+		}
+	}
+
+	public string DisplayName => !string.IsNullOrWhiteSpace(_alias) ? _alias : Name;
+
 	public string Description => _mod.Manifest.Description;
+	
+	public DateTime AddedTime => _mod.AddedTime;
 
 	public Visibility OptionsVisible
 	{
@@ -64,6 +82,7 @@ internal sealed partial class ModViewModel : ObservableObject
 	public ModOptionViewModel[]? Options { get; }
 
 	private readonly ModData _mod;
+	private ModAliasService? _aliasService;
 
 	public ModViewModel(ModData mod)
 	{
@@ -105,5 +124,20 @@ internal sealed partial class ModViewModel : ObservableObject
 		}
 		bmp.EndInit();
 		Icon = bmp;
+	}
+
+	public void SetAliasService(ModAliasService aliasService)
+	{
+		_aliasService = aliasService;
+		Alias = aliasService.GetAlias(Guid);
+	}
+
+	public void UpdateAlias(string? newAlias)
+	{
+		if (_aliasService is null)
+			return;
+
+		Alias = newAlias;
+		_aliasService.SetAlias(Guid, newAlias);
 	}
 }

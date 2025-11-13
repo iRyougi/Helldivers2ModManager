@@ -148,6 +148,7 @@
 									<ColumnDefinition Width="*"/>
 									<ColumnDefinition Width="Auto"/>
 									<ColumnDefinition Width="Auto"/>
+									<ColumnDefinition Width="Auto"/>
 								</Grid.ColumnDefinitions>
 								<Grid.RowDefinitions>
 									<RowDefinition Height="40"/>
@@ -161,12 +162,20 @@
 								</Viewbox>
 								<TextBlock Grid.Column="1"
 										   Grid.Row="0"
-										   Text="{Binding Name}"
+										   Text="{Binding DisplayName}"
 										   FontSize="36"
 										   Foreground="White"
 										   TextWrapping="NoWrap"
 										   TextTrimming="CharacterEllipsis"
-										   FontFamily="../Resources/Fonts/#FS Sinclair Medium"/>
+										   FontFamily="../Resources/Fonts/#FS Sinclair Medium">
+									<TextBlock.ToolTip>
+										<TextBlock>
+											<Run Text="Display: " FontWeight="Bold"/><Run Text="{Binding DisplayName, Mode=OneWay}"/>
+											<LineBreak/>
+											<Run Text="Original: " FontWeight="Bold"/><Run Text="{Binding Name, Mode=OneWay}" Foreground="Gray"/>
+										</TextBlock>
+									</TextBlock.ToolTip>
+								</TextBlock>
 								<TextBlock Grid.Column="1"
 										   Grid.Row="1"
 										   Text="{Binding Description}"
@@ -193,13 +202,25 @@
 										Visibility="{Binding EditVisible}"
 										Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Page}}}"
 										CommandParameter="{Binding}"/>
-								<CheckBox Grid.Column="2"
+								<Button Grid.Column="2"
+										Grid.Row="1"
+										Margin="3"
+										Width="50"
+										Foreground="White"
+										Content="别名"
+										FontSize="12"
+										VerticalContentAlignment="Center"
+										Padding="0"
+										ToolTip="Edit mod alias / 编辑Mod别名"
+										Command="{Binding DataContext.EditAliasCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Page}}}"
+										CommandParameter="{Binding}"/>
+								<CheckBox Grid.Column="3"
 										  Grid.Row="1"
 										  IsChecked="{Binding Enabled}"
 										  VerticalAlignment="Stretch"
 										  HorizontalAlignment="Right"
 										  Width="{Binding ActualHeight, RelativeSource={RelativeSource Mode=Self}}"/>
-								<StackPanel Grid.Column="3"
+								<StackPanel Grid.Column="4"
 											Grid.Row="0"
 											Grid.RowSpan="2"
 											Orientation="Horizontal"

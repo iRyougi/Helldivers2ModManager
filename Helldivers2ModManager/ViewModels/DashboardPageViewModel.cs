@@ -53,6 +53,7 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 	private readonly SettingsService _settingsService;
 	private readonly ProfileService _profileService;
 	private readonly LocalizationService _localizationService;
+	private readonly ModAliasService _aliasService;
 	private ObservableCollection<ModViewModel> _mods;
 	[ObservableProperty]
 	private Visibility _editVisibility = Visibility.Hidden;
@@ -63,7 +64,7 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 	[ObservableProperty]
 	private bool _initialized = false;
 
-	public DashboardPageViewModel(ILogger<DashboardPageViewModel> logger, IServiceProvider provider, SettingsService settingsService, ModService modService, ProfileService profileService, LocalizationService localizationService)
+	public DashboardPageViewModel(ILogger<DashboardPageViewModel> logger, IServiceProvider provider, SettingsService settingsService, ModService modService, ProfileService profileService, LocalizationService localizationService, ModAliasService aliasService)
 	{
 		_logger = logger;
 		_navStore = new(provider.GetRequiredService<NavigationStore>);
@@ -71,6 +72,7 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		_modService = modService;
 		_profileService = profileService;
 		_localizationService = localizationService;
+		_aliasService = aliasService;
 		_mods = [];
 
 		// Listen to language changes
@@ -123,6 +125,9 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		});
 
 		await _profileService.SaveAsync(_settingsService, _mods.Select(static vm => vm.Data));
+		
+		// Save aliases as well
+		await _aliasService.SaveAsync();
 
 		WeakReferenceMessenger.Default.Send(new MessageBoxHideMessage());
 	}
@@ -135,8 +140,12 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 			Mods = _mods.Where(vm =>
 			{
 				if (_settingsService.CaseSensitiveSearch)
-					return vm.Name.Contains(SearchText, StringComparison.InvariantCulture);
-				return vm.Name.Contains(SearchText, StringComparison.InvariantCultureIgnoreCase);
+				{
+					return vm.DisplayName.Contains(SearchText, StringComparison.InvariantCulture) ||
+					       vm.Name.Contains(SearchText, StringComparison.InvariantCulture);
+				}
+				return vm.DisplayName.Contains(SearchText, StringComparison.InvariantCultureIgnoreCase) ||
+				       vm.Name.Contains(SearchText, StringComparison.InvariantCultureIgnoreCase);
 			}).ToArray();
 		OnPropertyChanged(nameof(Mods));
 	}
@@ -183,6 +192,10 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 			return;
 		}
 		_logger.LogInformation("Settings valid");
+		
+		// Initialize alias service
+		_logger.LogInformation("Loading mod aliases...");
+		await _aliasService.InitAsync(_settingsService);
 		
 		_logger.LogInformation("Loading mods...");
 		WeakReferenceMessenger.Default.Send(new MessageBoxProgressMessage
@@ -237,7 +250,12 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		_logger.LogInformation("Profile loaded successfully");
 
 		_logger.LogInformation("Applying profile");
-		_mods = new(result.Select(static data => new ModViewModel(data)).ToList());
+		_mods = new(result.Select(data =>
+		{
+			var vm = new ModViewModel(data);
+			vm.SetAliasService(_aliasService);
+			return vm;
+		}).ToList());
 		UpdateView();
 
 		if (problems.Length > 0)
@@ -324,7 +342,9 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 
 	private void ModService_ModAdded(ModData mod)
 	{
-		_mods.Add(new ModViewModel(mod));
+		var vm = new ModViewModel(mod);
+		vm.SetAliasService(_aliasService);
+		_mods.Add(vm);
 		SearchText = string.Empty;
 	}
 
@@ -607,5 +627,34 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 	void ClearSearch()
 	{
 		SearchText = string.Empty;
+	}
+
+	[RelayCommand]
+	async Task EditAlias(ModViewModel modVm)
+	{
+		var currentAlias = modVm.Alias ?? modVm.Name;
+		
+		var dialog = new InputDialog(
+			"编辑Mod别名 / Edit Mod Alias",
+			$"为此Mod设置一个自定义名称:\nOriginal name: {modVm.Name}",
+			currentAlias)
+		{
+			Owner = Application.Current.MainWindow
+		};
+
+		if (dialog.ShowDialog() == true)
+		{
+			var newAlias = dialog.InputText.Trim();
+			// If the new alias is the same as original name or empty, remove the alias
+			if (string.IsNullOrWhiteSpace(newAlias) || newAlias == modVm.Name)
+			{
+				modVm.UpdateAlias(null);
+			}
+			else
+			{
+				modVm.UpdateAlias(newAlias);
+			}
+			await _aliasService.SaveAsync();
+		}
 	}
 }

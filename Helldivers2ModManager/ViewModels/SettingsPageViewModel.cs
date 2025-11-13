@@ -281,7 +281,7 @@ internal sealed partial class SettingsPageViewModel : PageViewModelBase
 		return true;
 	}
 
-	private async Task Init()
+private async Task Init()
 	{
 		_logger.LogInformation("Loading settings...");
 		WeakReferenceMessenger.Default.Send(new MessageBoxProgressMessage
@@ -588,7 +588,7 @@ internal sealed partial class SettingsPageViewModel : PageViewModelBase
 			Message = "Please wait democratically."
 		});
 
-		var (result, path) = await Task.Run<(bool, string?)>(static () =>
+		var (result, path) = await Task.Run(static () =>
 		{
 			foreach(var drive in Environment.GetLogicalDrives())
 			{
@@ -597,32 +597,37 @@ internal sealed partial class SettingsPageViewModel : PageViewModelBase
 				{
 					path = Path.Combine(drive, "Program Files (x86)", "Steam", "steamapps", "common", "Helldivers 2");
 					if (ValidateGameDir(new DirectoryInfo(path), out _))
-						return (true, path);
+						return (true, (string?)path);
 				}
 
 				path = Path.Combine(drive, "Steam", "steamapps", "common", "Helldivers 2");
 				if (ValidateGameDir(new DirectoryInfo(path), out _))
-					return (true, path);
+					return (true, (string?)path);
 
 				path = Path.Combine(drive, "SteamLibrary", "steamapps", "common", "Helldivers 2");
 				if (ValidateGameDir(new DirectoryInfo(path), out _))
-					return (true, path);
+					return (true, (string?)path);
 			}
 
-			return (false, null);
+			return (false, (string?)null);
 		});
 
-		if (result)
+		if (result && path != null)
+		{
+			GameDir = path;
 			WeakReferenceMessenger.Default.Send(new MessageBoxHideMessage());
+		}
 		else
+		{
 			WeakReferenceMessenger.Default.Send(new MessageBoxInfoMessage
 			{
 				Message = "Your Helldivers 2 game could not be found automatically. Please set it manually."
 			});
+		}
 	}
 
 	[RelayCommand]
-	async Task Back()
+	void Back()
 	{
 		if (HasChanges())
 		{

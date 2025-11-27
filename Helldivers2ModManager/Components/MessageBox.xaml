@@ -79,7 +79,9 @@
 						Content="Yes"
 						Click="YesButton_Click"
 						HorizontalAlignment="Right"
-						Margin="3"/>
+						Margin="3"
+						BorderBrush="Red"
+						BorderThickness="2"/>
 			</Grid>
 			<ProgressBar Grid.Row="2"
 						 x:Name="progress"

@@ -209,6 +209,9 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		_logger.LogInformation("Loading mod aliases...");
 		await _aliasService.InitAsync(_settingsService);
 		
+		// Provide alias service to mod service
+		_modService.SetAliasService(_aliasService);
+		
 		_logger.LogInformation("Loading mods...");
 		WeakReferenceMessenger.Default.Send(new MessageBoxProgressMessage
 		{
@@ -358,6 +361,7 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		vm.SetAliasService(_aliasService);
 		_mods.Add(vm);
 		SearchText = string.Empty;
+		UpdateView();
 	}
 
 	private void ModService_ModRemoved(ModData mod)
@@ -525,26 +529,38 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 	[RelayCommand]
 	async Task Remove(ModViewModel modVm)
 	{
-		WeakReferenceMessenger.Default.Send(new MessageBoxProgressMessage()
+		// Show confirmation dialog before removing
+		var modName = modVm.DisplayName;
+		var confirmMessage = string.Format(_localizationService["Message.ConfirmRemoveMessage"], modName);
+		
+		WeakReferenceMessenger.Default.Send(new MessageBoxConfirmMessage
 		{
-			Title = _localizationService["Message.RemovingMod"],
-			Message = _localizationService["Message.PleaseWait"]
-		});
-
-		try
-		{
-			await _modService.RemoveAsync(modVm.Data);
-
-			WeakReferenceMessenger.Default.Send(new MessageBoxHideMessage());
-		}
-		catch (Exception ex)
-		{
-			_logger.LogError(ex, "Unknown mod removal error");
-			WeakReferenceMessenger.Default.Send(new MessageBoxErrorMessage()
+			Title = _localizationService["Message.ConfirmRemoveTitle"],
+			Message = confirmMessage,
+			Confirm = async () =>
 			{
-				Message = ex.Message
-			});
-		}
+				WeakReferenceMessenger.Default.Send(new MessageBoxProgressMessage()
+				{
+					Title = _localizationService["Message.RemovingMod"],
+					Message = _localizationService["Message.PleaseWait"]
+				});
+
+				try
+				{
+					await _modService.RemoveAsync(modVm.Data);
+
+					WeakReferenceMessenger.Default.Send(new MessageBoxHideMessage());
+				}
+				catch (Exception ex)
+				{
+					_logger.LogError(ex, "Unknown mod removal error");
+					WeakReferenceMessenger.Default.Send(new MessageBoxErrorMessage()
+					{
+						Message = ex.Message
+					});
+				}
+			}
+		});
 	}
 
 	[RelayCommand(AllowConcurrentExecutions = false)]
@@ -570,6 +586,10 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 			try
 			{
 				var problems = await _modService.UpdateModFromArchiveAsync(modVm.Data, new FileInfo(dialog.FileName));
+				
+				// Save configuration immediately after update to persist the new GUID
+				await SaveEnabled();
+				
 				if (problems.Length > 0)
 				{
 					var error = problems.Any(static p => p.IsError);

@@ -112,17 +112,42 @@ internal sealed partial class ModViewModel : ObservableObject
 				throw new NotImplementedException();
 		}
 
+		// Load icon with proper exception handling
 		var bmp = new BitmapImage();
-		bmp.BeginInit();
-		var path = _mod.Manifest.IconPath;
-		if (string.IsNullOrEmpty(path) || string.IsNullOrWhiteSpace(path))
-			bmp.UriSource = new Uri(@"..\Resources\Images\logo_icon.png", UriKind.Relative);
-		else
+		try
 		{
-			bmp.UriSource = new Uri(Path.Combine(_mod.Directory.FullName, path));
-			bmp.CacheOption = BitmapCacheOption.OnLoad;
+			bmp.BeginInit();
+			var path = _mod.Manifest.IconPath;
+			if (string.IsNullOrEmpty(path) || string.IsNullOrWhiteSpace(path))
+			{
+				bmp.UriSource = new Uri(@"..\Resources\Images\logo_icon.png", UriKind.Relative);
+			}
+			else
+			{
+				var iconPath = Path.Combine(_mod.Directory.FullName, path);
+				if (File.Exists(iconPath))
+				{
+					bmp.UriSource = new Uri(iconPath);
+					bmp.CacheOption = BitmapCacheOption.OnLoad;
+				}
+				else
+				{
+					// Icon file doesn't exist, use default icon
+					// ModService already logged a warning when loading the manifest
+					bmp.UriSource = new Uri(@"..\Resources\Images\logo_icon.png", UriKind.Relative);
+				}
+			}
+			bmp.EndInit();
 		}
-		bmp.EndInit();
+		catch (Exception)
+		{
+			// If any error occurs during icon loading, use default icon
+			// ModService already logged a warning when loading the manifest
+			bmp = new BitmapImage();
+			bmp.BeginInit();
+			bmp.UriSource = new Uri(@"..\Resources\Images\logo_icon.png", UriKind.Relative);
+			bmp.EndInit();
+		}
 		Icon = bmp;
 	}
 

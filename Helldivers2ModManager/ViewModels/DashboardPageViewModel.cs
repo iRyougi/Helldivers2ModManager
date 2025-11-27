@@ -234,10 +234,24 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		}
 		_modService.ModAdded += ModService_ModAdded;
 		_modService.ModRemoved += ModService_ModRemoved;
+		
+		// During initialization, only log problems to file, don't show UI warnings
+		// Warnings will only be shown when user adds/updates mods
 		if (problems.Length != 0)
+		{
 			_logger.LogWarning("Loaded mods with {} problems", problems.Length);
+			
+			// Only show critical errors (not warnings like invalid icon paths) during initialization
+			var criticalProblems = problems.Where(static p => p.IsError).ToArray();
+			if (criticalProblems.Length > 0)
+			{
+				ShowProblems(criticalProblems, _localizationService["Message.ProblemsLoadingMods"], true, true);
+			}
+		}
 		else
+		{
 			_logger.LogInformation("Mods loaded successfully");
+		}
 		WeakReferenceMessenger.Default.Send(new MessageBoxHideMessage());
 
 		_logger.LogInformation("Loading profile...");
@@ -273,8 +287,6 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		}).ToList());
 		UpdateView();
 
-		if (problems.Length > 0)
-			ShowProblems(problems, _localizationService["Message.ProblemsLoadingMods"], false, true);
 		Initialized = true;
 		_logger.LogInformation("Initialization successful");
 

@@ -645,18 +645,9 @@ internal sealed partial class ModService
 		
 		switch (manifest)
 		{
-			case LegacyModManifest { Options: { } opts } man:
+			case LegacyModManifest man:
 			{
-				if (opts.Count == 0)
-				{
-					_logger.LogWarning("Empty Options found in manifest \"{}\"", manifestFile.FullName);
-					problems.Add(new ModProblem
-					{
-						Directory = dir,
-						Kind = ModProblemKind.EmptyOptions,
-					});
-				}
-
+				// Check icon path for all legacy manifests
 				if (man.IconPath is not null)
 				{
 					if (string.IsNullOrEmpty(man.IconPath) || string.IsNullOrWhiteSpace(man.IconPath))
@@ -681,18 +672,32 @@ internal sealed partial class ModService
 					}
 				}
 
-				foreach (var opt in opts)
-					if (!Directory.Exists(Path.Combine(dir.FullName, opt)))
+				// Check options if they exist
+				if (man.Options is { } opts)
+				{
+					if (opts.Count == 0)
 					{
-						error = true;
-						_logger.LogError("Manifest \"{}\" contains invalid path \"{}\"", manifestFile.FullName, opt);
+						_logger.LogWarning("Empty Options found in manifest \"{}\"", manifestFile.FullName);
 						problems.Add(new ModProblem
 						{
 							Directory = dir,
-							Kind = ModProblemKind.InvalidPath,
-							ExtraData = opt,
+							Kind = ModProblemKind.EmptyOptions,
 						});
 					}
+
+					foreach (var opt in opts)
+						if (!Directory.Exists(Path.Combine(dir.FullName, opt)))
+						{
+							error = true;
+							_logger.LogError("Manifest \"{}\" contains invalid path \"{}\"", manifestFile.FullName, opt);
+							problems.Add(new ModProblem
+							{
+								Directory = dir,
+								Kind = ModProblemKind.InvalidPath,
+								ExtraData = opt,
+							});
+						}
+				}
 				break;
 			}
 

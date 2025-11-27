@@ -369,9 +369,8 @@ FodyWeavers.xsd
 *.wixpdb
 *.wixobj
 *.zip
+*.ps1
 
 # Jetbrains Rider
 .idea/
 /hd2help.html
-/create_test_mod.ps1
-/test_invalid_icon.ps1

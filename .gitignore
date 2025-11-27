@@ -369,6 +369,7 @@ FodyWeavers.xsd
 *.wixpdb
 *.wixobj
 *.zip
+*.ps1
 
 # Jetbrains Rider
 .idea/

@@ -209,6 +209,9 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		_logger.LogInformation("Loading mod aliases...");
 		await _aliasService.InitAsync(_settingsService);
 		
+		// Provide alias service to mod service
+		_modService.SetAliasService(_aliasService);
+		
 		_logger.LogInformation("Loading mods...");
 		WeakReferenceMessenger.Default.Send(new MessageBoxProgressMessage
 		{
@@ -231,10 +234,24 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		}
 		_modService.ModAdded += ModService_ModAdded;
 		_modService.ModRemoved += ModService_ModRemoved;
+		
+		// During initialization, only log problems to file, don't show UI warnings
+		// Warnings will only be shown when user adds/updates mods
 		if (problems.Length != 0)
+		{
 			_logger.LogWarning("Loaded mods with {} problems", problems.Length);
+			
+			// Only show critical errors (not warnings like invalid icon paths) during initialization
+			var criticalProblems = problems.Where(static p => p.IsError).ToArray();
+			if (criticalProblems.Length > 0)
+			{
+				ShowProblems(criticalProblems, _localizationService["Message.ProblemsLoadingMods"], true, true);
+			}
+		}
 		else
+		{
 			_logger.LogInformation("Mods loaded successfully");
+		}
 		WeakReferenceMessenger.Default.Send(new MessageBoxHideMessage());
 
 		_logger.LogInformation("Loading profile...");
@@ -270,8 +287,6 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		}).ToList());
 		UpdateView();
 
-		if (problems.Length > 0)
-			ShowProblems(problems, _localizationService["Message.ProblemsLoadingMods"], false, true);
 		Initialized = true;
 		_logger.LogInformation("Initialization successful");
 
@@ -358,6 +373,7 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		vm.SetAliasService(_aliasService);
 		_mods.Add(vm);
 		SearchText = string.Empty;
+		UpdateView();
 	}
 
 	private void ModService_ModRemoved(ModData mod)
@@ -525,26 +541,38 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 	[RelayCommand]
 	async Task Remove(ModViewModel modVm)
 	{
-		WeakReferenceMessenger.Default.Send(new MessageBoxProgressMessage()
+		// Show confirmation dialog before removing
+		var modName = modVm.DisplayName;
+		var confirmMessage = string.Format(_localizationService["Message.ConfirmRemoveMessage"], modName);
+		
+		WeakReferenceMessenger.Default.Send(new MessageBoxConfirmMessage
 		{
-			Title = _localizationService["Message.RemovingMod"],
-			Message = _localizationService["Message.PleaseWait"]
-		});
-
-		try
-		{
-			await _modService.RemoveAsync(modVm.Data);
-
-			WeakReferenceMessenger.Default.Send(new MessageBoxHideMessage());
-		}
-		catch (Exception ex)
-		{
-			_logger.LogError(ex, "Unknown mod removal error");
-			WeakReferenceMessenger.Default.Send(new MessageBoxErrorMessage()
+			Title = _localizationService["Message.ConfirmRemoveTitle"],
+			Message = confirmMessage,
+			Confirm = async () =>
 			{
-				Message = ex.Message
-			});
-		}
+				WeakReferenceMessenger.Default.Send(new MessageBoxProgressMessage()
+				{
+					Title = _localizationService["Message.RemovingMod"],
+					Message = _localizationService["Message.PleaseWait"]
+				});
+
+				try
+				{
+					await _modService.RemoveAsync(modVm.Data);
+
+					WeakReferenceMessenger.Default.Send(new MessageBoxHideMessage());
+				}
+				catch (Exception ex)
+				{
+					_logger.LogError(ex, "Unknown mod removal error");
+					WeakReferenceMessenger.Default.Send(new MessageBoxErrorMessage()
+					{
+						Message = ex.Message
+					});
+				}
+			}
+		});
 	}
 
 	[RelayCommand(AllowConcurrentExecutions = false)]
@@ -570,6 +598,10 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 			try
 			{
 				var problems = await _modService.UpdateModFromArchiveAsync(modVm.Data, new FileInfo(dialog.FileName));
+				
+				// Save configuration immediately after update to persist the new GUID
+				await SaveEnabled();
+				
 				if (problems.Length > 0)
 				{
 					var error = problems.Any(static p => p.IsError);

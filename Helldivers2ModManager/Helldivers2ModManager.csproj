@@ -14,10 +14,17 @@
 		<ProductName>Helldivers 2 Mod Manager</ProductName>
 		<Authors>iRyougi</Authors>
 		<Company>KAMITSUBAKI STUDIO</Company>
-		<ProductVersion>1.3.0.2 beta 1</ProductVersion>
+		<ProductVersion>1.3.0.2 Stable</ProductVersion>
 		<AssemblyVersion>1.3.0.2</AssemblyVersion>
 		<FileVersion>1.3.0.2</FileVersion>
 		<PublishSingleFile>true</PublishSingleFile>
+		
+		<!-- Additional properties for better Windows identification -->
+		<Description>Helldivers 2 Mod Manager - A mod management tool for Helldivers 2</Description>
+		<Copyright>Copyright © 2025 KAMITSUBAKI STUDIO</Copyright>
+		<RepositoryUrl>https://github.com/iRyougi/Helldivers2ModManager</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageProjectUrl>https://github.com/iRyougi/Helldivers2ModManager</PackageProjectUrl>
 	</PropertyGroup>
 
 	<ItemGroup>

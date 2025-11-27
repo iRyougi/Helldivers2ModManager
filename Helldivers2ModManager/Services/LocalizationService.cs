@@ -14,10 +14,11 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 	public event PropertyChangedEventHandler? PropertyChanged;
 
 	public ObservableCollection<string> AvailableLanguages { get; } = new();
-	
-	// Version number for tracking language file updates
-	// Increment this whenever you update translations
-	private const int CurrentTranslationVersion = 2;
+
+    // Version number for tracking language file updates
+    // Increment this whenever you update translations
+    // 这里是语言文件版本，修改内置语言文件时请增加此版本号
+    private const int CurrentTranslationVersion = 3;
 	
 	public string CurrentLanguage
 	{
@@ -270,6 +271,8 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 			["MessageBox.Cancel"] = "Cancel",
 			["MessageBox.Yes"] = "Yes",
 			["MessageBox.No"] = "No",
+			["Message.ConfirmRemoveTitle"] = "Confirm Deletion",
+			["Message.ConfirmRemoveMessage"] = "Are you sure you want to delete this mod?\n\nMod: {0}\n\nThis action cannot be undone.",
 			
 			// InputDialog
 			["InputDialog.Title"] = "Edit Mod Alias",
@@ -425,6 +428,8 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 			["MessageBox.Cancel"] = "取消",
 			["MessageBox.Yes"] = "是",
 			["MessageBox.No"] = "否",
+			["Message.ConfirmRemoveTitle"] = "确认删除",
+			["Message.ConfirmRemoveMessage"] = "您确定要删除此模组吗？\n\nMod：{0}\n\n此操作无法撤销",
 			
 			// InputDialog
 			["InputDialog.Title"] = "编辑Mod别名",

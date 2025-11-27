@@ -15,7 +15,7 @@ internal partial class App : Application
 {
 	public static readonly Version Version = new(1, 3, 0, 2); //版本号
 
-	public static readonly string? VersionAddition = "Beta Test"; //版本附加信息
+	public static readonly string? VersionAddition = "Stable"; //版本附加信息
 
     public new static App Current => (App)Application.Current;
 

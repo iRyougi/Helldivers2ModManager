@@ -36,13 +36,19 @@ internal sealed partial class ModService
 	private readonly ILogger<ModService> _logger;
 	private readonly List<ModData> _mods;
 	private SettingsService? _settingsService;
+	private ModAliasService? _aliasService;
 
 	public ModService(ILogger<ModService> logger)
 	{
 		_logger = logger;
 		_mods = new();
 	}
-	
+
+	public void SetAliasService(ModAliasService aliasService)
+	{
+		_aliasService = aliasService;
+	}
+
 	public ModProblem[] Init(SettingsService settings)
 	{
 		if (Initialized)
@@ -255,8 +261,16 @@ internal sealed partial class ModService
 
 		_logger.LogInformation("Attempting to update mod \"{}\" from \"{}\"", oldMod.Manifest.Name, newArchiveFile.Name);
 
-		var oldModName = oldMod.Manifest.Name;
 		var oldModDir = oldMod.Directory;
+		var oldModGuid = oldMod.Manifest.Guid;
+		
+		// Preserve the alias before removing the old mod
+		string? preservedAlias = null;
+		if (_aliasService is not null)
+		{
+			preservedAlias = _aliasService.GetAlias(oldModGuid);
+			_logger.LogInformation("Preserving alias \"{}\" for mod {}", preservedAlias ?? "<none>", oldModGuid);
+		}
 
 		// Create temporary directory for extraction
 		var tmpDir = new DirectoryInfo(Path.Combine(_settingsService.TempDirectory, newArchiveFile.Name[..^newArchiveFile.Extension.Length]));
@@ -322,8 +336,23 @@ internal sealed partial class ModService
 		_logger.LogInformation("Deleting old mod directory");
 		await Task.Run(() => oldModDir.Delete(true));
 
-		_logger.LogInformation("Moving new mod to storage with old mod name");
-		var modDir = new DirectoryInfo(Path.Combine(_settingsService.StorageDirectory, "Mods", oldModName));
+		_logger.LogInformation("Moving new mod to storage with new mod name");
+		// Use the NEW manifest name for the directory, not the old one
+		var modDir = new DirectoryInfo(Path.Combine(_settingsService.StorageDirectory, "Mods", manifest.Name));
+		
+		// Check if directory already exists (in case new mod has same name as another mod)
+		if (modDir.Exists)
+		{
+			_logger.LogError("Mod directory already exists in storage");
+			tmpDir.Delete(true);
+			problems.Add(new ModProblem
+			{
+				Directory = modDir,
+				Kind = ModProblemKind.Duplicate,
+			});
+			return problems.ToArray();
+		}
+		
 		modDir.Parent?.Create();
 		await Task.Run(() => tmpDir.CopyTo(modDir.FullName));
 
@@ -332,6 +361,20 @@ internal sealed partial class ModService
 		{
 			Enabled = false  // Set to disabled as per requirement
 		};
+		
+		// Migrate the alias from old GUID to new GUID BEFORE adding the mod
+		// This ensures ModViewModel will get the correct alias when created
+		if (_aliasService is not null && !string.IsNullOrWhiteSpace(preservedAlias))
+		{
+			// Remove the old GUID mapping to avoid orphaned entries
+			_aliasService.SetAlias(oldModGuid, null);
+			_logger.LogInformation("Removed alias mapping for old mod GUID {}", oldModGuid);
+			
+			// Set the alias for the new GUID
+			_aliasService.SetAlias(mod.Manifest.Guid, preservedAlias);
+			_logger.LogInformation("Migrated alias \"{}\" from old GUID {} to new GUID {}", preservedAlias, oldModGuid, mod.Manifest.Guid);
+		}
+		
 		_mods.Add(mod);
 		ModAdded?.Invoke(mod);
 
@@ -357,7 +400,7 @@ internal sealed partial class ModService
 		var stageDir = new DirectoryInfo(Path.Combine(_settingsService.TempDirectory, "Staging"));
 		_logger.LogInformation("Creating clean staging directory \"{}\"", stageDir.FullName);
 		if (stageDir.Exists)
-			stageDir.Delete(true);
+			stageDir.Delete();
 		stageDir.Create();
 
 		var groups = new Dictionary<string, List<PatchFileTriplet>>();
@@ -602,18 +645,9 @@ internal sealed partial class ModService
 		
 		switch (manifest)
 		{
-			case LegacyModManifest { Options: { } opts } man:
+			case LegacyModManifest man:
 			{
-				if (opts.Count == 0)
-				{
-					_logger.LogWarning("Empty Options found in manifest \"{}\"", manifestFile.FullName);
-					problems.Add(new ModProblem
-					{
-						Directory = dir,
-						Kind = ModProblemKind.EmptyOptions,
-					});
-				}
-
+				// Check icon path for all legacy manifests
 				if (man.IconPath is not null)
 				{
 					if (string.IsNullOrEmpty(man.IconPath) || string.IsNullOrWhiteSpace(man.IconPath))
@@ -638,18 +672,32 @@ internal sealed partial class ModService
 					}
 				}
 
-				foreach (var opt in opts)
-					if (!Directory.Exists(Path.Combine(dir.FullName, opt)))
+				// Check options if they exist
+				if (man.Options is { } opts)
+				{
+					if (opts.Count == 0)
 					{
-						error = true;
-						_logger.LogError("Manifest \"{}\" contains invalid path \"{}\"", manifestFile.FullName, opt);
+						_logger.LogWarning("Empty Options found in manifest \"{}\"", manifestFile.FullName);
 						problems.Add(new ModProblem
 						{
 							Directory = dir,
-							Kind = ModProblemKind.InvalidPath,
-							ExtraData = opt,
+							Kind = ModProblemKind.EmptyOptions,
 						});
 					}
+
+					foreach (var opt in opts)
+						if (!Directory.Exists(Path.Combine(dir.FullName, opt)))
+						{
+							error = true;
+							_logger.LogError("Manifest \"{}\" contains invalid path \"{}\"", manifestFile.FullName, opt);
+							problems.Add(new ModProblem
+							{
+								Directory = dir,
+								Kind = ModProblemKind.InvalidPath,
+								ExtraData = opt,
+							});
+						}
+				}
 				break;
 			}
 

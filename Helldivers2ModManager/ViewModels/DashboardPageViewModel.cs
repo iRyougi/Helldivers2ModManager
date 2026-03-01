@@ -635,6 +635,32 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 			});
 			try
 			{
+				// GUID mismatch check
+				var newManifestInfo = await _modService.PeekManifestInfoFromArchiveAsync(new FileInfo(dialog.FileName));
+				if (newManifestInfo is not null && newManifestInfo.Value.Guid != modVm.Guid)
+				{
+					var tcs = new TaskCompletionSource<bool>();
+					WeakReferenceMessenger.Default.Send(new MessageBoxHideMessage());
+					WeakReferenceMessenger.Default.Send(new MessageBoxConfirmMessage
+					{
+						Title = _localizationService["Message.UpdateGuidMismatchTitle"],
+						Message = string.Format(
+							_localizationService["Message.UpdateGuidMismatchBody"],
+							modVm.DisplayName, modVm.Guid,
+							newManifestInfo.Value.Name, newManifestInfo.Value.Guid),
+						Confirm = () => tcs.SetResult(true),
+						Abort = () => tcs.SetResult(false),
+					});
+					bool proceed = await tcs.Task;
+					if (!proceed) return;
+					// Re-show progress
+					WeakReferenceMessenger.Default.Send(new MessageBoxProgressMessage
+					{
+						Title = _localizationService["Message.UpdatingMod"],
+						Message = _localizationService["Message.PleaseWait"]
+					});
+				}
+
 				var problems = await _modService.UpdateModFromArchiveAsync(modVm.Data, new FileInfo(dialog.FileName));
 				
 				// Save configuration immediately after update to persist the new GUID

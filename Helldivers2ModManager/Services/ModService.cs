@@ -594,8 +594,34 @@ internal sealed partial class ModService
 		_logger.LogInformation("Deployment success");
 	}
 
-	public ConflictInfo[] DetectConflicts(Guid[] enabledModGuids)
+	public async Task<(Guid Guid, string Name)?> PeekManifestInfoFromArchiveAsync(FileInfo archiveFile)
 	{
+		GuardInitialized();
+
+		var tmpDir = new DirectoryInfo(Path.Combine(
+			_settingsService.TempDirectory,
+			"peek_" + archiveFile.Name[..^archiveFile.Extension.Length]));
+		try
+		{
+			if (tmpDir.Exists) tmpDir.Delete(true);
+			tmpDir.Create();
+			await Task.Run(() => ArchiveFactory.Open(archiveFile).ExtractToDirectory(tmpDir.FullName));
+			var manifestFile = new FileInfo(Path.Combine(tmpDir.FullName, "manifest.json"));
+			if (!manifestFile.Exists) return null;
+			var manifest = ModManifest.DeserializeFromFile(manifestFile);
+			return (manifest.Guid, manifest.Name);
+		}
+		catch
+		{
+			return null;
+		}
+		finally
+		{
+			if (tmpDir.Exists) tmpDir.Delete(true);
+		}
+	}
+
+	public ConflictInfo[] DetectConflicts(Guid[] enabledModGuids)	{
 		GuardInitialized();
 
 		// Map: 16-char prefix → list of mods that have files with that prefix

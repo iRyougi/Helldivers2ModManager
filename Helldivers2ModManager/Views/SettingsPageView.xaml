@@ -1,4 +1,4 @@
-﻿<Page x:Class="Helldivers2ModManager.Views.SettingsPageView"
+<Page x:Class="Helldivers2ModManager.Views.SettingsPageView"
 	  x:ClassModifier="internal"
 	  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -21,235 +21,221 @@
 				<x:Type TypeName="logging:LogLevel"/>
 			</ObjectDataProvider.MethodParameters>
 		</ObjectDataProvider>
+		<Style x:Key="CardBorder" TargetType="Border">
+			<Setter Property="Background" Value="#1E1E1E"/>
+			<Setter Property="BorderBrush" Value="#333333"/>
+			<Setter Property="BorderThickness" Value="1"/>
+			<Setter Property="CornerRadius" Value="6"/>
+			<Setter Property="Padding" Value="12 8"/>
+			<Setter Property="Margin" Value="0 4"/>
+		</Style>
+		<Style x:Key="SectionTitle" TargetType="TextBlock">
+			<Setter Property="FontSize" Value="20"/>
+			<Setter Property="Foreground" Value="#FFD700"/>
+			<Setter Property="Margin" Value="0 0 0 4"/>
+		</Style>
+		<Style x:Key="SectionDesc" TargetType="TextBlock">
+			<Setter Property="FontSize" Value="12"/>
+			<Setter Property="FontFamily" Value="..\Resources\Fonts\#FS Sinclair Regular"/>
+			<Setter Property="Foreground" Value="DarkGray"/>
+			<Setter Property="TextWrapping" Value="Wrap"/>
+		</Style>
 	</Page.Resources>
-	<Grid>
+	<Grid Background="#141414">
 		<Grid.RowDefinitions>
 			<RowDefinition Height="*"/>
 			<RowDefinition Height="Auto"/>
 		</Grid.RowDefinitions>
-		<ScrollViewer Grid.Row="0"
-					  Margin="3">
-			<StackPanel Margin="3">
-				<TextBlock FontSize="24"
-						   Foreground="White"
-						   Text="{Binding GameDirectoryLabel}"/>
-				<TextBlock FontSize="12"
-						   FontFamily="..\Resources\Fonts\#FS Sinclair Regular"
-						   Foreground="DarkGray"
-						   Text="{Binding GameDirectoryDesc}"/>
-				<TextBlock FontSize="12"
-						   FontFamily="..\Resources\Fonts\#FS Sinclair Regular"
-						   Foreground="DarkGray"
-						   Text="{Binding GameDirectoryHint}"/>
-				<Grid>
-					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="*"/>
-						<ColumnDefinition Width="Auto"/>
-						<ColumnDefinition Width="Auto"/>
-					</Grid.ColumnDefinitions>
-					<TextBox Text="{Binding GameDir, Mode=OneWay}"
-							 IsReadOnly="True"
-							 FontSize="18"
-							 VerticalAlignment="Center"/>
-					<Button Grid.Column="1"
-							Content="{Binding AutoDetectLabel}"
-							Command="{Binding DetectGameCommand}"/>
-					<Button Grid.Column="2"
-							Content="..."
-							Command="{Binding BrowseGameCommand}"/>
-				</Grid>
-				<TextBlock FontSize="24"
-						   Foreground="White"
-						   Margin="0 10 0 0"
-						   Text="{Binding StorageDirectoryLabel}"/>
-				<TextBlock FontSize="12"
-						   FontFamily="..\Resources\Fonts\#FS Sinclair Regular"
-						   Foreground="DarkGray"
-						   Text="{Binding StorageDirectoryDesc}"/>
-				<TextBlock FontSize="12"
-						   FontFamily="..\Resources\Fonts\#FS Sinclair Regular"
-						   Foreground="Red"
-						   Text="{Binding StorageDirectoryWarning}"/>
-				<Grid>
-					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="*"/>
-						<ColumnDefinition Width="Auto"/>
-					</Grid.ColumnDefinitions>
-					<TextBox Text="{Binding StorageDir, Mode=OneWay}"
-							 IsReadOnly="True"
-							 FontSize="18"
-							 VerticalAlignment="Center"/>
-					<Button Content="..."
-							Grid.Column="1"
-							Command="{Binding BrowseStorageCommand}"/>
-				</Grid>
-				<TextBlock FontSize="24"
-						   Foreground="White"
-						   Margin="0 10 0 0"
-						   Text="{Binding TempDirectoryLabel}"/>
-				<TextBlock FontSize="12"
-						   FontFamily="..\Resources\Fonts\#FS Sinclair Regular"
-						   Foreground="DarkGray"
-						   Text="{Binding TempDirectoryDesc}"/>
-				<TextBlock FontSize="12"
-						   FontFamily="..\Resources\Fonts\#FS Sinclair Regular"
-						   Foreground="DarkGray"
-						   Text="{Binding TempDirectoryItem1}"/>
-				<TextBlock FontSize="12"
-						   FontFamily="..\Resources\Fonts\#FS Sinclair Regular"
-						   Foreground="DarkGray"
-						   Text="{Binding TempDirectoryItem2}"/>
-				<TextBlock FontSize="12"
-						   FontFamily="..\Resources\Fonts\#FS Sinclair Regular"
-						   Foreground="DarkGray"
-						   Text="{Binding TempDirectoryItem3}"/>
-				<Grid>
-					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="*"/>
-						<ColumnDefinition Width="Auto"/>
-					</Grid.ColumnDefinitions>
-					<TextBox Text="{Binding TempDir, Mode=OneWay}"
-							 IsReadOnly="True"
-							 FontSize="18"
-							 VerticalAlignment="Center"/>
-					<Button Content="..."
-							Grid.Column="1"
-							Command="{Binding BrowseTempCommand}"/>
-				</Grid>
-				<TextBlock FontSize="24"
-						   Foreground="White"
-						   Margin="0 10 0 0"
-						   Text="{Binding OpacityLabel}"/>
-				<TextBlock FontSize="12"
-						   FontFamily="..\Resources\Fonts\#FS Sinclair Regular"
-						   Foreground="DarkGray"
-						   Text="{Binding OpacityDesc}"/>
-				<Slider HorizontalAlignment="Left"
-						Width="200"
-						Minimum="0.5"
-						Maximum="1"
-						TickFrequency="0.05"
-						TickPlacement="BottomRight"
-						IsSnapToTickEnabled="True"
-						Value="{Binding Opacity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-				<TextBlock FontSize="24"
-						   Foreground="White"
-						   Margin="0 10 0 0"
-						   Text="{Binding LanguageLabel}"/>
-				<TextBlock FontSize="12"
-						   FontFamily="..\Resources\Fonts\#FS Sinclair Regular"
-						   Foreground="DarkGray"
-						   Text="{Binding LanguageDesc}"/>
-				<ComboBox HorizontalAlignment="Left"
-						  Width="200"
-						  ItemsSource="{Binding AvailableLanguages}"
-						  SelectedItem="{Binding Language, Mode=TwoWay}"/>
-				<TextBlock FontSize="24"
-						   Foreground="White"
-						   Margin="0 10 0 0"
-						   Text="{Binding LogLevelLabel}"/>
-				<TextBlock FontSize="12"
-						   FontFamily="..\Resources\Fonts\#FS Sinclair Regular"
-						   Foreground="DarkGray"
-						   Text="{Binding LogLevelDesc}"/>
-				<TextBlock FontSize="12"
-						   FontFamily="..\Resources\Fonts\#FS Sinclair Regular"
-						   Foreground="DarkGray"
-						   Text="{Binding LogLevelDefault}"/>
-				<ComboBox HorizontalAlignment="Left"
-						  ItemsSource="{Binding Source={StaticResource LogLevelEnumData}}"
-						  SelectedItem="{Binding LogLevel}"/>
-				<TextBlock FontSize="24"
-						   Foreground="White"
-						   Margin="0 10 0 0"
-						   Text="{Binding SearchLabel}"/>
-				<Grid>
-					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="Auto"/>
-						<ColumnDefinition Width="Auto"/>
-					</Grid.ColumnDefinitions>
-					<Grid.RowDefinitions>
-						<RowDefinition Height="Auto"/>
-						<RowDefinition Height="Auto"/>
-					</Grid.RowDefinitions>
-					<CheckBox Grid.Row="0"
-							  Grid.Column="0"
-							  Width="30"
-							  Height="30"
-							  IsChecked="{Binding CaseSensitiveSearch}"
-							  Margin="0 0 5 0"/>
-					<TextBlock Grid.Row="0"
-							   Grid.Column="1"
-							   FontSize="12"
-							   FontFamily="..\Resources\Fonts\#FS Sinclair Regular"
-							   Foreground="DarkGray"
-							   Text="{Binding CaseSensitiveLabel}"
-							   VerticalAlignment="Center"/>
-				</Grid>
-				<TextBlock FontSize="24"
-						   Foreground="White"
-						   Margin="0 10 0 0"
-						   Text="{Binding UtilitiesLabel}"/>
-				<Button Content="{Binding ResetLabel}"
-						Style="{DynamicResource CancelButton}"
-						Command="{Binding ResetCommand}"
-						HorizontalAlignment="Left"/>
-				<TextBlock Grid.Column="0"
-						   FontSize="12"
-						   FontFamily="..\Resources\Fonts\#FS Sinclair Regular"
-						   Foreground="DarkGray"
-						   Margin="0 0 0 5"
-						   Text="{Binding ResetDesc}"/>
-				<TextBlock FontSize="24"
-						   Foreground="White"
-						   Margin="0 10 0 0"
-						   Text="{Binding DevOptionsLabel}"
-						   TextDecorations="Underline"/>
-				<TextBlock FontSize="18"
-						   Foreground="White"
-						   Margin="0 5 0 0"
-						   Text="{Binding SkipListLabel}"/>
-				<TextBlock Grid.Column="0"
-						   FontSize="12"
-						   FontFamily="..\Resources\Fonts\#FS Sinclair Regular"
-						   Foreground="DarkGray"
-						   Margin="0 0 0 5"
-						   Text="{Binding SkipListDesc}"/>
-				<ListBox Width="300"
-						 MinHeight="50"
-						 ItemsSource="{Binding SkipList}"
-						 HorizontalAlignment="Left"
-						 BorderBrush="LightGray"
-						 BorderThickness="3"
-						 Background="Black"
-						 SelectedIndex="{Binding SelectedSkip}">
-					<ListBox.ItemTemplate>
-						<DataTemplate DataType="{x:Type sys:String}">
-							<TextBlock Text="{Binding}"
-									   Foreground="White"
-									   FontFamily="Consolas"/>
-						</DataTemplate>
-					</ListBox.ItemTemplate>
-				</ListBox>
-				<StackPanel Orientation="Horizontal">
-					<Button Command="{Binding AddSkipCommand}"
-							Margin="0 3 3 3"
-							Padding="10 0">
-						<TextBlock Text="+"
-								   FontSize="24"
-								   FontFamily="../Resources/Fonts/#FS Sinclair Medium"/>
-					</Button>
-					<Button Command="{Binding RemoveSkipCommand}"
-							Margin="0 3 3 3"
-							Padding="10 0">
-						<TextBlock Text="-"
-								   FontSize="24"
-								   FontFamily="../Resources/Fonts/#FS Sinclair Medium"/>
-					</Button>
-				</StackPanel>
+		<ScrollViewer Grid.Row="0" Margin="6 6 6 0">
+			<StackPanel Margin="0 0 0 6">
+
+				<!-- Game Directory -->
+				<Border Style="{StaticResource CardBorder}">
+					<StackPanel>
+						<TextBlock Style="{StaticResource SectionTitle}" Text="{Binding GameDirectoryLabel}"/>
+						<TextBlock Style="{StaticResource SectionDesc}" Text="{Binding GameDirectoryDesc}"/>
+						<TextBlock Style="{StaticResource SectionDesc}" Text="{Binding GameDirectoryHint}" Margin="0 2 0 6"/>
+						<Grid>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="*"/>
+								<ColumnDefinition Width="Auto"/>
+								<ColumnDefinition Width="Auto"/>
+							</Grid.ColumnDefinitions>
+							<TextBox Text="{Binding GameDir, Mode=OneWay}"
+									 IsReadOnly="True"
+									 FontSize="16"
+									 VerticalAlignment="Center"/>
+							<Button Grid.Column="1"
+									Content="{Binding AutoDetectLabel}"
+									Command="{Binding DetectGameCommand}"/>
+							<Button Grid.Column="2"
+									Content="..."
+									Command="{Binding BrowseGameCommand}"/>
+						</Grid>
+					</StackPanel>
+				</Border>
+
+				<!-- Storage Directory -->
+				<Border Style="{StaticResource CardBorder}">
+					<StackPanel>
+						<TextBlock Style="{StaticResource SectionTitle}" Text="{Binding StorageDirectoryLabel}"/>
+						<TextBlock Style="{StaticResource SectionDesc}" Text="{Binding StorageDirectoryDesc}"/>
+						<TextBlock FontSize="12"
+								   FontFamily="..\Resources\Fonts\#FS Sinclair Regular"
+								   Foreground="#FF6666"
+								   TextWrapping="Wrap"
+								   Margin="0 2 0 6"
+								   Text="{Binding StorageDirectoryWarning}"/>
+						<Grid>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="*"/>
+								<ColumnDefinition Width="Auto"/>
+							</Grid.ColumnDefinitions>
+							<TextBox Text="{Binding StorageDir, Mode=OneWay}"
+									 IsReadOnly="True"
+									 FontSize="16"
+									 VerticalAlignment="Center"/>
+							<Button Content="..."
+									Grid.Column="1"
+									Command="{Binding BrowseStorageCommand}"/>
+						</Grid>
+					</StackPanel>
+				</Border>
+
+				<!-- Temporary Directory -->
+				<Border Style="{StaticResource CardBorder}">
+					<StackPanel>
+						<TextBlock Style="{StaticResource SectionTitle}" Text="{Binding TempDirectoryLabel}"/>
+						<TextBlock Style="{StaticResource SectionDesc}" Text="{Binding TempDirectoryDesc}"/>
+						<TextBlock Style="{StaticResource SectionDesc}" Text="{Binding TempDirectoryItem1}"/>
+						<TextBlock Style="{StaticResource SectionDesc}" Text="{Binding TempDirectoryItem2}"/>
+						<TextBlock Style="{StaticResource SectionDesc}" Text="{Binding TempDirectoryItem3}" Margin="0 0 0 6"/>
+						<Grid>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="*"/>
+								<ColumnDefinition Width="Auto"/>
+							</Grid.ColumnDefinitions>
+							<TextBox Text="{Binding TempDir, Mode=OneWay}"
+									 IsReadOnly="True"
+									 FontSize="16"
+									 VerticalAlignment="Center"/>
+							<Button Content="..."
+									Grid.Column="1"
+									Command="{Binding BrowseTempCommand}"/>
+						</Grid>
+					</StackPanel>
+				</Border>
+
+				<!-- Language -->
+				<Border Style="{StaticResource CardBorder}">
+					<StackPanel>
+						<TextBlock Style="{StaticResource SectionTitle}" Text="{Binding LanguageLabel}"/>
+						<TextBlock Style="{StaticResource SectionDesc}" Text="{Binding LanguageDesc}" Margin="0 0 0 6"/>
+						<ComboBox HorizontalAlignment="Left"
+								  Width="200"
+								  ItemsSource="{Binding AvailableLanguages}"
+								  SelectedItem="{Binding Language, Mode=TwoWay}"/>
+					</StackPanel>
+				</Border>
+
+				<!-- Log Level -->
+				<Border Style="{StaticResource CardBorder}">
+					<StackPanel>
+						<TextBlock Style="{StaticResource SectionTitle}" Text="{Binding LogLevelLabel}"/>
+						<TextBlock Style="{StaticResource SectionDesc}" Text="{Binding LogLevelDesc}"/>
+						<TextBlock Style="{StaticResource SectionDesc}" Text="{Binding LogLevelDefault}" Margin="0 0 0 6"/>
+						<ComboBox HorizontalAlignment="Left"
+								  ItemsSource="{Binding Source={StaticResource LogLevelEnumData}}"
+								  SelectedItem="{Binding LogLevel}"/>
+					</StackPanel>
+				</Border>
+
+				<!-- Search -->
+				<Border Style="{StaticResource CardBorder}">
+					<StackPanel>
+						<TextBlock Style="{StaticResource SectionTitle}" Text="{Binding SearchLabel}"/>
+						<Grid Margin="0 4 0 0">
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="Auto"/>
+								<ColumnDefinition Width="Auto"/>
+							</Grid.ColumnDefinitions>
+							<CheckBox Grid.Column="0"
+									  Width="28"
+									  Height="28"
+									  IsChecked="{Binding CaseSensitiveSearch}"
+									  Margin="0 0 8 0"/>
+							<TextBlock Grid.Column="1"
+									   Style="{StaticResource SectionDesc}"
+									   Text="{Binding CaseSensitiveLabel}"
+									   VerticalAlignment="Center"/>
+						</Grid>
+					</StackPanel>
+				</Border>
+
+				<!-- Utilities -->
+				<Border Style="{StaticResource CardBorder}">
+					<StackPanel>
+						<TextBlock Style="{StaticResource SectionTitle}" Text="{Binding UtilitiesLabel}"/>
+						<Button Content="{Binding ResetLabel}"
+								Style="{DynamicResource CancelButton}"
+								Command="{Binding ResetCommand}"
+								HorizontalAlignment="Left"
+								Margin="0 4 0 4"/>
+						<TextBlock Style="{StaticResource SectionDesc}" Text="{Binding ResetDesc}"/>
+					</StackPanel>
+				</Border>
+
+				<!-- Dev Options -->
+				<Border Style="{StaticResource CardBorder}">
+					<StackPanel>
+						<TextBlock FontSize="20"
+								   Foreground="#FFD700"
+								   TextDecorations="Underline"
+								   Margin="0 0 0 4"
+								   Text="{Binding DevOptionsLabel}"/>
+						<TextBlock FontSize="16"
+								   Foreground="White"
+								   Margin="0 0 0 2"
+								   Text="{Binding SkipListLabel}"/>
+						<TextBlock Style="{StaticResource SectionDesc}" Text="{Binding SkipListDesc}" Margin="0 0 0 6"/>
+						<ListBox Width="300"
+								 MinHeight="50"
+								 ItemsSource="{Binding SkipList}"
+								 HorizontalAlignment="Left"
+								 BorderBrush="#444444"
+								 BorderThickness="1"
+								 Background="#141414"
+								 SelectedIndex="{Binding SelectedSkip}">
+							<ListBox.ItemTemplate>
+								<DataTemplate DataType="{x:Type sys:String}">
+									<TextBlock Text="{Binding}"
+											   Foreground="White"
+											   FontFamily="Consolas"/>
+								</DataTemplate>
+							</ListBox.ItemTemplate>
+						</ListBox>
+						<StackPanel Orientation="Horizontal" Margin="0 4 0 0">
+							<Button Command="{Binding AddSkipCommand}"
+									Margin="0 0 4 0"
+									Padding="10 0">
+								<TextBlock Text="+"
+										   FontSize="24"
+										   FontFamily="../Resources/Fonts/#FS Sinclair Medium"/>
+							</Button>
+							<Button Command="{Binding RemoveSkipCommand}"
+									Margin="0 0 0 0"
+									Padding="10 0">
+								<TextBlock Text="-"
+										   FontSize="24"
+										   FontFamily="../Resources/Fonts/#FS Sinclair Medium"/>
+							</Button>
+						</StackPanel>
+					</StackPanel>
+				</Border>
+
 			</StackPanel>
 		</ScrollViewer>
-		<Grid Grid.Row="1">
+		<Grid Grid.Row="1" Background="#1a1a1a" Margin="0">
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition Width="*"/>
 				<ColumnDefinition Width="Auto"/>

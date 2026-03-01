@@ -16,10 +16,10 @@
 		MinHeight="600"
 		Content="{Binding CurrentViewModel}"
 		WindowStyle="None"
-		AllowsTransparency="True"
+		AllowsTransparency="False"
 		WindowStartupLocation="CenterScreen"
-		Background="{Binding Background}"
-		d:Background="Black">
+		Background="#1a1a1a"
+		d:Background="#1a1a1a">
 	<Window.Resources>
 		<DataTemplate DataType="{x:Type vms:DashboardPageViewModel}">
 			<views:DashboardPageView/>

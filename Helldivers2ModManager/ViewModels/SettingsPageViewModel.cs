@@ -32,8 +32,6 @@ internal sealed partial class SettingsPageViewModel : PageViewModelBase
 	public string TempDirectoryItem1 => _localizationService["Settings.TempDirectoryItem1"];
 	public string TempDirectoryItem2 => _localizationService["Settings.TempDirectoryItem2"];
 	public string TempDirectoryItem3 => _localizationService["Settings.TempDirectoryItem3"];
-	public string OpacityLabel => _localizationService["Settings.Opacity"];
-	public string OpacityDesc => _localizationService["Settings.OpacityDesc"];
 	public string LanguageLabel => _localizationService["Settings.Language"];
 	public string LanguageDesc => _localizationService["Settings.LanguageDesc"];
 	public string LogLevelLabel => _localizationService["Settings.LogLevel"];
@@ -94,17 +92,6 @@ internal sealed partial class SettingsPageViewModel : PageViewModelBase
 		}
 	}
 
-	public float Opacity
-	{
-		get => _settingsService.Initialized ? _settingsService.Opacity : SettingsService.OpacityDefault;
-		set
-		{
-			OnPropertyChanging();
-			_settingsService.Opacity = value;
-			OnPropertyChanged();
-		}
-	}
-
 	public ObservableCollection<string> SkipList => _settingsService.Initialized ? _settingsService.SkipList : [];
 
 	public bool CaseSensitiveSearch
@@ -144,7 +131,6 @@ internal sealed partial class SettingsPageViewModel : PageViewModelBase
 	private string? _initialTempDir;
 	private string? _initialStorageDir;
 	private LogLevel _initialLogLevel;
-	private float _initialOpacity;
 	private bool _initialCaseSensitiveSearch;
 	private string? _initialLanguage;
 	private List<string>? _initialSkipList;
@@ -182,8 +168,6 @@ internal sealed partial class SettingsPageViewModel : PageViewModelBase
 		OnPropertyChanged(nameof(TempDirectoryItem1));
 		OnPropertyChanged(nameof(TempDirectoryItem2));
 		OnPropertyChanged(nameof(TempDirectoryItem3));
-		OnPropertyChanged(nameof(OpacityLabel));
-		OnPropertyChanged(nameof(OpacityDesc));
 		OnPropertyChanged(nameof(LanguageLabel));
 		OnPropertyChanged(nameof(LanguageDesc));
 		OnPropertyChanged(nameof(LogLevelLabel));
@@ -322,7 +306,6 @@ private async Task Init()
 		OnPropertyChanged(nameof(TempDir));
 		OnPropertyChanged(nameof(StorageDir));
 		OnPropertyChanged(nameof(LogLevel));
-		OnPropertyChanged(nameof(Opacity));
 		OnPropertyChanged(nameof(SkipList));
 		OnPropertyChanged(nameof(CaseSensitiveSearch));
 		OnPropertyChanged(nameof(Language));
@@ -340,7 +323,6 @@ private async Task Init()
 		_initialTempDir = _settingsService.TempDirectory;
 		_initialStorageDir = _settingsService.StorageDirectory;
 		_initialLogLevel = _settingsService.LogLevel;
-		_initialOpacity = _settingsService.Opacity;
 		_initialCaseSensitiveSearch = _settingsService.CaseSensitiveSearch;
 		_initialLanguage = _settingsService.Language;
 		_initialSkipList = new List<string>(_settingsService.SkipList);
@@ -358,7 +340,6 @@ private async Task Init()
 		_settingsService.TempDirectory = _initialTempDir ?? string.Empty;
 		_settingsService.StorageDirectory = _initialStorageDir ?? string.Empty;
 		_settingsService.LogLevel = _initialLogLevel;
-		_settingsService.Opacity = _initialOpacity;
 		_settingsService.CaseSensitiveSearch = _initialCaseSensitiveSearch;
 		_settingsService.Language = _initialLanguage ?? "en";
 		
@@ -388,8 +369,6 @@ private async Task Init()
 		if (_initialStorageDir != _settingsService.StorageDirectory)
 			return true;
 		if (_initialLogLevel != _settingsService.LogLevel)
-			return true;
-		if (Math.Abs(_initialOpacity - _settingsService.Opacity) > 0.001f)
 			return true;
 		if (_initialCaseSensitiveSearch != _settingsService.CaseSensitiveSearch)
 			return true;

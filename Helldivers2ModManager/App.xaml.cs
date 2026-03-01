@@ -24,6 +24,8 @@ internal partial class App : Application
 	public LogLevel LogLevel { get; set; }
 
 	private readonly ILogger? _logger;
+	private Mutex? _singleInstanceMutex;
+	private const string MutexName = "Global\\HD2ModManager_iRyougi_SingleInstance";
 
 	public App()
 	{
@@ -53,6 +55,27 @@ internal partial class App : Application
 
 	protected override async void OnStartup(StartupEventArgs e)
 	{
+		// Single instance enforcement
+		_singleInstanceMutex = new Mutex(true, MutexName, out bool isNewInstance);
+		if (!isNewInstance)
+		{
+			var current = System.Diagnostics.Process.GetCurrentProcess();
+			var others = System.Diagnostics.Process.GetProcessesByName(current.ProcessName)
+				.Where(p => p.Id != current.Id)
+				.ToArray();
+			foreach (var other in others)
+			{
+				var hwnd = other.MainWindowHandle;
+				if (hwnd != nint.Zero)
+				{
+					NativeMethods.ShowWindow(hwnd, NativeMethods.SW_RESTORE);
+					NativeMethods.SetForegroundWindow(hwnd);
+				}
+			}
+			Shutdown();
+			return;
+		}
+
 		base.OnStartup(e);
 
 		// Initialize localization service
@@ -123,6 +146,13 @@ internal partial class App : Application
 			MessageBox.Show($"An unhandled exception occurred before logging could be initialized!\n\n{ex?.ToString()}", "Fatal Error", MessageBoxButton.OK, MessageBoxImage.Error);
 		else
 			_logger?.LogError(ex, "An unhandled exception occured!");
+	}
+
+	protected override void OnExit(ExitEventArgs e)
+	{
+		_singleInstanceMutex?.ReleaseMutex();
+		_singleInstanceMutex?.Dispose();
+		base.OnExit(e);
 	}
 }
 

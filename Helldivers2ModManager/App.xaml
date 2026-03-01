@@ -359,8 +359,71 @@
 			</Style.Triggers>
 		</Style>
 
-		<Style TargetType="TreeView">
+		<!-- Toggle Switch (replaces CheckBox for mod enabled state) -->
+		<Style x:Key="ToggleSwitch" TargetType="ToggleButton">
+			<Setter Property="OverridesDefaultStyle" Value="True"/>
 			<Setter Property="SnapsToDevicePixels" Value="True"/>
+			<Setter Property="Cursor" Value="Hand"/>
+			<Setter Property="Width" Value="44"/>
+			<Setter Property="Height" Value="24"/>
+			<Setter Property="Margin" Value="4"/>
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="ToggleButton">
+						<Border x:Name="Track"
+								Width="44" Height="24"
+								CornerRadius="12"
+								Background="#555555"
+								SnapsToDevicePixels="True">
+							<Ellipse x:Name="Thumb"
+									 Width="18" Height="18"
+									 Fill="White"
+									 HorizontalAlignment="Left"
+									 Margin="3 0 0 0">
+								<Ellipse.RenderTransform>
+									<TranslateTransform x:Name="ThumbTranslate" X="0"/>
+								</Ellipse.RenderTransform>
+							</Ellipse>
+						</Border>
+						<ControlTemplate.Triggers>
+							<Trigger Property="IsChecked" Value="True">
+								<Setter TargetName="Track" Property="Background" Value="#FFD700"/>
+								<Setter TargetName="Thumb" Property="Fill" Value="#1a1a1a"/>
+								<Trigger.EnterActions>
+									<BeginStoryboard>
+										<Storyboard>
+											<DoubleAnimation
+												Storyboard.TargetName="ThumbTranslate"
+												Storyboard.TargetProperty="X"
+												To="20" Duration="0:0:0.15"/>
+										</Storyboard>
+									</BeginStoryboard>
+								</Trigger.EnterActions>
+								<Trigger.ExitActions>
+									<BeginStoryboard>
+										<Storyboard>
+											<DoubleAnimation
+												Storyboard.TargetName="ThumbTranslate"
+												Storyboard.TargetProperty="X"
+												To="0" Duration="0:0:0.15"/>
+										</Storyboard>
+									</BeginStoryboard>
+								</Trigger.ExitActions>
+							</Trigger>
+							<Trigger Property="IsEnabled" Value="False">
+								<Setter TargetName="Track" Property="Background" Value="#333333"/>
+								<Setter TargetName="Thumb" Property="Fill" Value="#666666"/>
+							</Trigger>
+							<Trigger Property="IsMouseOver" Value="True">
+								<Setter TargetName="Track" Property="Opacity" Value="0.85"/>
+							</Trigger>
+						</ControlTemplate.Triggers>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+
+		<Style TargetType="TreeView">			<Setter Property="SnapsToDevicePixels" Value="True"/>
 			<Setter Property="Foreground" Value="White"/>
 			<Setter Property="Background" Value="Transparent"/>
 			<Setter Property="BorderThickness" Value="3"/>

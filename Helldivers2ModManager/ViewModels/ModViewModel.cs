@@ -144,7 +144,7 @@ internal sealed partial class ModViewModel : ObservableObject
 					bmp.UriSource = new Uri(@"..\Resources\Images\logo_icon.png", UriKind.Relative);
 				}
 			}
-			bmp.EndInit();
+			bmp.EndInit(); 
 		}
 		catch (Exception)
 		{

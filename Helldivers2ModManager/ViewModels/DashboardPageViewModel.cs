@@ -285,6 +285,8 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 			vm.SetAliasService(_aliasService);
 			return vm;
 		}).ToList());
+		_mods.CollectionChanged += (_, _) => RefreshOrder();
+		RefreshOrder();
 		UpdateView();
 
 		Initialized = true;
@@ -665,6 +667,12 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 	bool CanClearSearch()
 	{
 		return !IsSearchEmpty;
+	}
+
+	private void RefreshOrder()
+	{
+		for (int i = 0; i < _mods.Count; i++)
+			_mods[i].Order = i + 1;
 	}
 
 	[RelayCommand(CanExecute = nameof(CanClearSearch))]

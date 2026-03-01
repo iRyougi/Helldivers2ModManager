@@ -29,6 +29,13 @@ internal sealed partial class ModViewModel : ObservableObject
 
 	public string DisplayName => !string.IsNullOrWhiteSpace(_alias) ? _alias : Name;
 
+	private int _order;
+	public int Order
+	{
+		get => _order;
+		set => SetProperty(ref _order, value);
+	}
+
 	public string Description => _mod.Manifest.Description;
 	
 	public DateTime AddedTime => _mod.AddedTime;

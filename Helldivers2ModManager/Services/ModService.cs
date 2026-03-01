@@ -594,6 +594,85 @@ internal sealed partial class ModService
 		_logger.LogInformation("Deployment success");
 	}
 
+	public ConflictInfo[] DetectConflicts(Guid[] enabledModGuids)
+	{
+		GuardInitialized();
+
+		// Map: 16-char prefix → list of mods that have files with that prefix
+		var prefixToMods = new Dictionary<string, List<ModData>>();
+
+		foreach (var guid in enabledModGuids)
+		{
+			var mod = GetModByGuid(guid);
+			if (mod is null) continue;
+
+			var prefixes = new HashSet<string>();
+
+			void ScanDir(DirectoryInfo dir)
+			{
+				if (!dir.Exists) return;
+				foreach (var file in dir.GetFiles())
+				{
+					if (!GetPatchFileRegex().IsMatch(file.Name)) continue;
+					var prefix = file.Name[0..16];
+					prefixes.Add(prefix);
+				}
+			}
+
+			switch (mod.Manifest.Version)
+			{
+				case ManifestVersion.Legacy:
+				{
+					var man = (LegacyModManifest)mod.Manifest;
+					if (man.Options is { } opts && mod.SelectedOptions is [var sel, ..])
+						ScanDir(new DirectoryInfo(Path.Combine(mod.Directory.FullName, opts[sel])));
+					else
+						ScanDir(mod.Directory);
+					break;
+				}
+				case ManifestVersion.V1:
+				{
+					var man = (V1ModManifest)mod.Manifest;
+					if (man.Options is null)
+					{
+						ScanDir(mod.Directory);
+						break;
+					}
+					var enabled = mod.EnabledOptions;
+					var selected = mod.SelectedOptions;
+					for (int i = 0; i < man.Options.Count; i++)
+					{
+						if (i >= enabled.Length || !enabled[i]) continue;
+						var opt = man.Options[i];
+						if (opt.Include is { } incs)
+							foreach (var inc in incs)
+								ScanDir(new DirectoryInfo(Path.Combine(mod.Directory.FullName, inc)));
+						if (opt.SubOptions is { } subs && i < selected.Length)
+							foreach (var inc in subs[selected[i]].Include)
+								ScanDir(new DirectoryInfo(Path.Combine(mod.Directory.FullName, inc)));
+					}
+					break;
+				}
+			}
+
+			foreach (var prefix in prefixes)
+			{
+				if (!prefixToMods.ContainsKey(prefix))
+					prefixToMods[prefix] = new List<ModData>();
+				prefixToMods[prefix].Add(mod);
+			}
+		}
+
+		return prefixToMods
+			.Where(kvp => kvp.Value.Count > 1)
+			.Select(kvp => new ConflictInfo
+			{
+				PatchPrefix = kvp.Key,
+				ConflictingMods = kvp.Value.ToArray()
+			})
+			.ToArray();
+	}
+
 	public async Task PurgeAsync()
 	{
 		GuardInitialized();

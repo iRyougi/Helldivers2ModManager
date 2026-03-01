@@ -501,6 +501,42 @@ internal sealed partial class DashboardPageViewModel : PageViewModelBase
 		var mods = _mods.Where(static vm => vm.Enabled).ToArray();
 		var guids = mods.Select(static vm => vm.Guid).ToArray();
 
+		// Conflict detection
+		var conflicts = _modService.DetectConflicts(guids);
+		if (conflicts.Length > 0)
+		{
+			var sb = new StringBuilder();
+			foreach (var conflict in conflicts)
+			{
+				var modNames = string.Join(", ", conflict.ConflictingMods.Select(m =>
+				{
+					var alias = _aliasService.GetAlias(m.Manifest.Guid);
+					return !string.IsNullOrWhiteSpace(alias) ? alias : m.Manifest.Name;
+				}));
+				sb.AppendLine(string.Format(_localizationService["Message.ConflictDetectedItem"], conflict.PatchPrefix, modNames));
+			}
+
+			bool proceed = false;
+			var tcs = new TaskCompletionSource<bool>();
+			WeakReferenceMessenger.Default.Send(new MessageBoxHideMessage());
+			WeakReferenceMessenger.Default.Send(new MessageBoxConfirmMessage
+			{
+				Title = _localizationService["Message.ConflictDetectedTitle"],
+				Message = string.Format(_localizationService["Message.ConflictDetectedBody"], sb.ToString().TrimEnd()),
+				Confirm = () => tcs.SetResult(true),
+				Abort = () => tcs.SetResult(false),
+			});
+			proceed = await tcs.Task;
+			if (!proceed)
+				return;
+
+			WeakReferenceMessenger.Default.Send(new MessageBoxProgressMessage()
+			{
+				Title = _localizationService["Message.DeployingMods"],
+				Message = _localizationService["Message.PleaseWait"]
+			});
+		}
+
 		try
 		{
 			await SaveEnabled();
